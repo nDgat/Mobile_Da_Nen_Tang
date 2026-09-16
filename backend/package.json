@@ -1,0 +1,49 @@
+{
+  "name": "cinebook-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "REST API cho ứng dụng đặt vé CineBook",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "postinstall": "prisma generate",
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate",
+    "db:migrate": "prisma migrate deploy",
+    "db:status": "prisma migrate status",
+    "db:seed": "prisma db seed",
+    "db:diff": "prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "overrides": {
+    "@prisma/adapter-mariadb": {
+      "mariadb": "3.5.4"
+    },
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.2"
+    },
+    "prisma": {
+      "mysql2": "3.24.4"
+    }
+  },
+  "dependencies": {
+    "@prisma/adapter-mariadb": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mysql2": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.20.3",
+    "prisma": "7.10.0",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}

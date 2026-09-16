@@ -1,0 +1,20 @@
+.env
+node_modules/
+dist/
+backend/src/generated/prisma/
+
+# Only publish the project progress document.
+*.[mM][dD]
+!docs/PROGRESS.md
+
+# Local secrets, tooling and runtime output.
+.env.*
+!.env.example
+*.pem
+*.key
+*.log
+.claude/
+.codex/
+.agents/
+.expo/
+coverage/
