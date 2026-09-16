@@ -4,9 +4,9 @@ Cập nhật lần cuối: 2026-09-17
 
 ## Tổng quan
 
-- Hoàn thành: **17/54 phần (31,5%)**
+- Hoàn thành: **19/54 phần (35,2%)**
 - Đang thực hiện: chưa bắt đầu phần mới.
-- Bước tiếp theo: **PHẦN 18 – Quản lý suất chiếu**.
+- Bước tiếp theo: **PHẦN 20 – Đăng nhập JWT**.
 
 Quy ước:
 
@@ -33,8 +33,8 @@ Quy ước:
 - [x] PHẦN 15 – CRUD rạp
 - [x] PHẦN 16 – CRUD phòng chiếu
 - [x] PHẦN 17 – CRUD ghế
-- [ ] PHẦN 18 – Quản lý suất chiếu
-- [ ] PHẦN 19 – Đăng ký tài khoản
+- [x] PHẦN 18 – Quản lý suất chiếu
+- [x] PHẦN 19 – Đăng ký tài khoản
 - [ ] PHẦN 20 – Đăng nhập JWT
 - [ ] PHẦN 21 – Refresh Token
 - [ ] PHẦN 22 – Phân quyền
@@ -109,6 +109,19 @@ Quy ước:
 - `GET /health/prisma` trả status `ok`
 - Đã chuẩn bị API học tập tại `/api/v1/examples` theo Route → Controller → Service
 - Agent đã xác minh HTTP `200`, `201`, `400`, `404`; chờ người học tự chạy và xác nhận
+
+## PHẦN 19 đã hoàn thành
+
+- `POST /api/v1/auth/register` tạo tài khoản CUSTOMER.
+- Chuẩn hóa email, kiểm tra mật khẩu, chặn email trùng và băm bằng bcrypt cost 12.
+- Response không chứa mật khẩu/hash; kiểm thử đạt `201`, `400`, `409`.
+
+## PHẦN 18 đã hoàn thành
+
+- API `/api/v1/showtimes`: danh sách, chi tiết, tạo và đổi trạng thái.
+- Tự tính giờ kết thúc theo thời lượng phim và tạo ghế theo suất trong transaction.
+- Chặn lịch phòng trùng; kiểm thử đạt `200`, `201`, `400`, `409` và tạo đúng 40 ghế.
+- Dữ liệu kiểm thử đã dọn sạch; seed giữ 30 suất và 1200 ghế theo suất.
 
 ## PHẦN 17 đã hoàn thành
 

@@ -1,0 +1,20 @@
+import { hash } from "bcryptjs";
+import { findUserByEmail, insertCustomer } from "./auth.repository.js";
+
+export class RegisterValidationError extends Error {}
+export class EmailConflictError extends Error {}
+function bodyObject(value: unknown): Record<string, unknown> { if (typeof value !== "object" || value === null || Array.isArray(value)) throw new RegisterValidationError("Body phải là một JSON object."); return value as Record<string, unknown>; }
+function text(value: unknown, field: string, max: number) { if (typeof value !== "string" || value.trim() === "") throw new RegisterValidationError(`${field} phải là chuỗi không rỗng.`); const result = value.trim(); if (result.length > max) throw new RegisterValidationError(`${field} không được vượt quá ${max} ký tự.`); return result; }
+function email(value: unknown) { const result = text(value, "email", 191).toLowerCase(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result)) throw new RegisterValidationError("email không đúng định dạng."); return result; }
+function password(value: unknown) { if (typeof value !== "string" || value.length < 8 || value.length > 72) throw new RegisterValidationError("password phải có từ 8 đến 72 ký tự."); if (!/[a-z]/.test(value) || !/[A-Z]/.test(value) || !/\d/.test(value)) throw new RegisterValidationError("password phải có chữ thường, chữ hoa và chữ số."); return value; }
+
+export async function registerCustomer(value: unknown) {
+  const body = bodyObject(value);
+  const normalizedEmail = email(body.email);
+  const fullName = text(body.fullName, "fullName", 100);
+  const rawPassword = password(body.password);
+  if (await findUserByEmail(normalizedEmail)) throw new EmailConflictError("Email đã được đăng ký.");
+  const user = await insertCustomer({ email: normalizedEmail, fullName, passwordHash: await hash(rawPassword, 12) });
+  return { id: user.id, email: user.email, fullName: user.fullName, role: user.role, isActive: user.isActive, createdAt: user.createdAt.toISOString() };
+}
+
