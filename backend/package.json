@@ -38,10 +38,12 @@
     "bcryptjs": "^3.0.2",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.24.4"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.20.3",
     "prisma": "7.10.0",
     "tsx": "^4.23.13",

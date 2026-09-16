@@ -4,9 +4,9 @@ Cập nhật lần cuối: 2026-09-17
 
 ## Tổng quan
 
-- Hoàn thành: **19/54 phần (35,2%)**
+- Hoàn thành: **22/54 phần (40,7%)**
 - Đang thực hiện: chưa bắt đầu phần mới.
-- Bước tiếp theo: **PHẦN 20 – Đăng nhập JWT**.
+- Bước tiếp theo: **PHẦN 23 – App Home**.
 
 Quy ước:
 
@@ -35,9 +35,9 @@ Quy ước:
 - [x] PHẦN 17 – CRUD ghế
 - [x] PHẦN 18 – Quản lý suất chiếu
 - [x] PHẦN 19 – Đăng ký tài khoản
-- [ ] PHẦN 20 – Đăng nhập JWT
-- [ ] PHẦN 21 – Refresh Token
-- [ ] PHẦN 22 – Phân quyền
+- [x] PHẦN 20 – Đăng nhập JWT
+- [x] PHẦN 21 – Refresh Token
+- [x] PHẦN 22 – Phân quyền
 - [ ] PHẦN 23 – App Home
 - [ ] PHẦN 24 – Danh sách phim
 - [ ] PHẦN 25 – Chi tiết phim
@@ -109,6 +109,29 @@ Quy ước:
 - `GET /health/prisma` trả status `ok`
 - Đã chuẩn bị API học tập tại `/api/v1/examples` theo Route → Controller → Service
 - Agent đã xác minh HTTP `200`, `201`, `400`, `404`; chờ người học tự chạy và xác nhận
+
+## PHẦN 22 đã hoàn thành
+
+- Middleware RBAC phân biệt `CUSTOMER` và `ADMIN` từ access token.
+- GET dữ liệu phim/rạp/phòng/ghế/suất vẫn công khai.
+- Các thao tác tạo/sửa/xóa chỉ dành cho ADMIN.
+- Kiểm thử đạt: đọc `200`, chưa đăng nhập `401`, CUSTOMER `403`, ADMIN `201/200/204`.
+- Dữ liệu và tài khoản kiểm thử đã dọn sạch.
+
+## PHẦN 21 đã hoàn thành
+
+- Login trả access token và refresh token ngẫu nhiên có hạn 30 ngày.
+- `POST /api/v1/auth/refresh` xoay vòng token; token cũ bị vô hiệu ngay.
+- `POST /api/v1/auth/logout` thu hồi refresh token.
+- Chỉ hash SHA-256 được lưu trong MySQL; migration và schema đã đồng bộ.
+- Kiểm thử refresh/logout/reuse đạt `200`, `204`, `401`; dữ liệu thử đã dọn sạch.
+
+## PHẦN 20 đã hoàn thành
+
+- `POST /api/v1/auth/login` xác minh email/mật khẩu và trả access token JWT 15 phút.
+- `GET /api/v1/auth/me` dùng middleware Bearer token để bảo vệ endpoint.
+- JWT dùng HS256, issuer, audience, secret riêng trong `.env`; không lộ mật khẩu/hash.
+- Kiểm thử đạt: login/me `200`, sai hoặc thiếu token `401`, tài khoản khóa `403`.
 
 ## PHẦN 19 đã hoàn thành
 

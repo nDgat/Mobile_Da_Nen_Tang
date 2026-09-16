@@ -40,6 +40,23 @@ function readRequired(name: string): string {
   return value;
 }
 
+function readPositiveInteger(value: string | undefined, fallback: number): number {
+  if (value === undefined) return fallback;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error("JWT_ACCESS_TTL_SECONDS phải là số nguyên dương.");
+  }
+  return parsed;
+}
+
+function readJwtSecret(): string {
+  const secret = readRequired("JWT_ACCESS_SECRET");
+  if (secret.length < 32) {
+    throw new Error("JWT_ACCESS_SECRET phải có ít nhất 32 ký tự.");
+  }
+  return secret;
+}
+
 export const env = {
   database: {
     host: process.env.MYSQL_HOST ?? "127.0.0.1",
@@ -49,6 +66,13 @@ export const env = {
     user: readRequired("MYSQL_USER"),
   },
   host: process.env.HOST ?? "0.0.0.0",
+  jwt: {
+    accessSecret: readJwtSecret(),
+    accessTtlSeconds: readPositiveInteger(process.env.JWT_ACCESS_TTL_SECONDS, 900),
+    audience: "cinebook-mobile",
+    issuer: "cinebook-api",
+    refreshTtlSeconds: readPositiveInteger(process.env.JWT_REFRESH_TTL_SECONDS, 2_592_000),
+  },
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: readPort(process.env.PORT, DEFAULT_PORT),
 };

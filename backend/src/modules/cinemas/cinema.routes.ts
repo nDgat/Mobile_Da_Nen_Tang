@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { requireAuthentication, requireRole } from "../auth/auth.middleware.js";
 
 import {
   createCinemaHandler,
@@ -12,7 +13,6 @@ export const cinemaRouter = Router();
 
 cinemaRouter.get("/", listCinemaHandler);
 cinemaRouter.get("/:id", getCinemaHandler);
-cinemaRouter.post("/", createCinemaHandler);
-cinemaRouter.patch("/:id", updateCinemaHandler);
-cinemaRouter.delete("/:id", deleteCinemaHandler);
-
+cinemaRouter.post("/", requireAuthentication, requireRole("ADMIN"), createCinemaHandler);
+cinemaRouter.patch("/:id", requireAuthentication, requireRole("ADMIN"), updateCinemaHandler);
+cinemaRouter.delete("/:id", requireAuthentication, requireRole("ADMIN"), deleteCinemaHandler);
