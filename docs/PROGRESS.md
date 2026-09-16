@@ -4,9 +4,9 @@ Cập nhật lần cuối: 2026-09-16
 
 ## Tổng quan
 
-- Hoàn thành: **12/54 phần (22,2%)**
-- Đang thực hiện: **PHẦN 13 – REST API cơ bản**.
-- Bước tiếp theo: người học chạy các request mẫu và xác nhận kết quả.
+- Hoàn thành: **13/54 phần (24,1%)**
+- Đang thực hiện: **PHẦN 14 – CRUD phim**.
+- Bước tiếp theo: chạy và xác nhận các API CRUD phim.
 
 Quy ước:
 
@@ -28,8 +28,8 @@ Quy ước:
 - [x] PHẦN 10 – Thiết kế Database
 - [x] PHẦN 11 – Migration Prisma
 - [x] PHẦN 12 – Seed dữ liệu
-- [-] PHẦN 13 – REST API cơ bản
-- [ ] PHẦN 14 – CRUD phim
+- [x] PHẦN 13 – REST API cơ bản
+- [-] PHẦN 14 – CRUD phim
 - [ ] PHẦN 15 – CRUD rạp
 - [ ] PHẦN 16 – CRUD phòng chiếu
 - [ ] PHẦN 17 – CRUD ghế
@@ -110,7 +110,28 @@ Quy ước:
 - Đã chuẩn bị API học tập tại `/api/v1/examples` theo Route → Controller → Service
 - Agent đã xác minh HTTP `200`, `201`, `400`, `404`; chờ người học tự chạy và xác nhận
 
-## PHẦN 13 đang thực hiện
+## PHẦN 14 đang thực hiện
+
+Đã chuẩn bị:
+
+- `GET /api/v1/movies` có phân trang và lọc trạng thái.
+- `GET /api/v1/movies/:id` đọc chi tiết phim.
+- `POST /api/v1/movies` tạo phim.
+- `PATCH /api/v1/movies/:id` cập nhật từng phần.
+- `DELETE /api/v1/movies/:id` xóa mềm bằng `isActive=false`.
+- Luồng Route → Controller → Service → Repository → Prisma → MySQL.
+
+Trạng thái: **Đang thực hiện**. Chờ kiểm tra kỹ thuật và người học xác nhận.
+
+Kết quả kỹ thuật:
+
+- Typecheck và build thành công.
+- Kiểm thử trên MySQL thật đạt: list `200`, create `201`, detail `200`, update `200`, delete `204`, validation `400`, không tồn tại `404`.
+- Xóa mềm đổi đúng `isActive=false`.
+- Bản ghi kiểm thử đã được xóa vật lý sau kiểm tra; dữ liệu seed vẫn giữ 8 phim.
+- Chờ người học chạy các lệnh trong `docs/MOVIE_CRUD.md` và xác nhận.
+
+## PHẦN 13 đã hoàn thành
 
 Đã chuẩn bị:
 
@@ -126,7 +147,7 @@ Kết quả kỹ thuật:
 - Typecheck và build thành công.
 - Kiểm thử HTTP thật đạt các mã `200`, `201`, `400`, `404`.
 
-Trạng thái: **Đang thực hiện**. Chờ người học chạy các lệnh trong tài liệu và xác nhận trước khi tính hoàn thành.
+Trạng thái: **Hoàn thành**. Người học yêu cầu chuyển sang phần tiếp theo.
 
 ## PHẦN 9 đã hoàn thành
 
