@@ -4,9 +4,9 @@ Cập nhật lần cuối: 2026-09-16
 
 ## Tổng quan
 
-- Hoàn thành: **11/54 phần (20,4%)**
-- Đang thực hiện: **PHẦN 12 – Seed dữ liệu**; đã kiểm tra kỹ thuật, chờ người học xác nhận.
-- Bước tiếp theo: chạy db:seed theo `docs/SEED_DATA.md`, sau đó sang Phần 13.
+- Hoàn thành: **12/54 phần (22,2%)**
+- Đang thực hiện: **PHẦN 13 – REST API cơ bản**.
+- Bước tiếp theo: người học chạy các request mẫu và xác nhận kết quả.
 
 Quy ước:
 
@@ -27,8 +27,8 @@ Quy ước:
 - [x] PHẦN 9 – Prisma từ cơ bản
 - [x] PHẦN 10 – Thiết kế Database
 - [x] PHẦN 11 – Migration Prisma
-- [-] PHẦN 12 – Seed dữ liệu
-- [ ] PHẦN 13 – REST API cơ bản
+- [x] PHẦN 12 – Seed dữ liệu
+- [-] PHẦN 13 – REST API cơ bản
 - [ ] PHẦN 14 – CRUD phim
 - [ ] PHẦN 15 – CRUD rạp
 - [ ] PHẦN 16 – CRUD phòng chiếu
@@ -73,6 +73,12 @@ Quy ước:
 
 ## Kết quả đã xác minh
 
+### Seed dữ liệu
+
+- Người học đã chạy `npm run db:seed` thành công.
+- 8 phim, 3 rạp, mỗi rạp 5 phòng: tổng 15 phòng, 600 ghế, 30 suất và 1200 ghế theo suất.
+- Lịch mẫu ngày 20/09/2026 thuộc 2 phim demo; 6 phim thật bổ sung chưa có suất.
+
 ### Môi trường
 
 - Node.js `v20.20.0`
@@ -101,6 +107,26 @@ Quy ước:
 - `GET /health/database` xác nhận database `cinebook` hoạt động
 - Prisma ORM 7.10 kết nối thành công với MySQL qua driver adapter
 - `GET /health/prisma` trả status `ok`
+- Đã chuẩn bị API học tập tại `/api/v1/examples` theo Route → Controller → Service
+- Agent đã xác minh HTTP `200`, `201`, `400`, `404`; chờ người học tự chạy và xác nhận
+
+## PHẦN 13 đang thực hiện
+
+Đã chuẩn bị:
+
+- API phiên bản tại `/api/v1`.
+- `GET /api/v1/examples/:id` để học path parameter và query parameter.
+- `POST /api/v1/examples` để học JSON body, validation, status `201` và header `Location`.
+- Phản hồi lỗi JSON thống nhất cho dữ liệu sai và endpoint không tồn tại.
+- Cấu trúc Route → Controller → Service; chưa truy cập database để không lấn sang CRUD phim ở Phần 14.
+- Tài liệu thực hành `docs/REST_API_BASICS.md`.
+
+Kết quả kỹ thuật:
+
+- Typecheck và build thành công.
+- Kiểm thử HTTP thật đạt các mã `200`, `201`, `400`, `404`.
+
+Trạng thái: **Đang thực hiện**. Chờ người học chạy các lệnh trong tài liệu và xác nhận trước khi tính hoàn thành.
 
 ## PHẦN 9 đã hoàn thành
 
