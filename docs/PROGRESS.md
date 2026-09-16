@@ -4,9 +4,9 @@ Cập nhật lần cuối: 2026-09-16
 
 ## Tổng quan
 
-- Hoàn thành: **13/54 phần (24,1%)**
-- Đang thực hiện: **PHẦN 14 – CRUD phim**.
-- Bước tiếp theo: chạy và xác nhận các API CRUD phim.
+- Hoàn thành: **14/54 phần (25,9%)**
+- Đang thực hiện: **PHẦN 15 – CRUD rạp**.
+- Bước tiếp theo: chạy và xác nhận các API CRUD rạp.
 
 Quy ước:
 
@@ -29,8 +29,8 @@ Quy ước:
 - [x] PHẦN 11 – Migration Prisma
 - [x] PHẦN 12 – Seed dữ liệu
 - [x] PHẦN 13 – REST API cơ bản
-- [-] PHẦN 14 – CRUD phim
-- [ ] PHẦN 15 – CRUD rạp
+- [x] PHẦN 14 – CRUD phim
+- [-] PHẦN 15 – CRUD rạp
 - [ ] PHẦN 16 – CRUD phòng chiếu
 - [ ] PHẦN 17 – CRUD ghế
 - [ ] PHẦN 18 – Quản lý suất chiếu
@@ -110,7 +110,26 @@ Quy ước:
 - Đã chuẩn bị API học tập tại `/api/v1/examples` theo Route → Controller → Service
 - Agent đã xác minh HTTP `200`, `201`, `400`, `404`; chờ người học tự chạy và xác nhận
 
-## PHẦN 14 đang thực hiện
+## PHẦN 15 đang thực hiện
+
+Đã chuẩn bị:
+
+- CRUD rạp tại `/api/v1/cinemas`.
+- Danh sách có phân trang, lọc `active` và tìm theo `city`.
+- Luồng Route → Controller → Service → Repository → Prisma → MySQL.
+- `DELETE` dùng xóa mềm để giữ nguyên phòng và dữ liệu lịch sử.
+
+Trạng thái: **Đang thực hiện**. Chờ kiểm tra kỹ thuật và người học xác nhận.
+
+Kết quả kỹ thuật:
+
+- Typecheck và build thành công.
+- Kiểm thử MySQL thật đạt: list `200`, create `201`, detail `200`, update `200`, delete `204`, validation `400`, không tồn tại `404`.
+- Xóa mềm đổi đúng `isActive=false`.
+- Rạp kiểm thử đã được xóa vật lý sau kiểm tra; seed vẫn giữ 3 rạp và 15 phòng.
+- Chờ người học thực hành theo `docs/CINEMA_CRUD.md`.
+
+## PHẦN 14 đã hoàn thành
 
 Đã chuẩn bị:
 
@@ -121,15 +140,15 @@ Quy ước:
 - `DELETE /api/v1/movies/:id` xóa mềm bằng `isActive=false`.
 - Luồng Route → Controller → Service → Repository → Prisma → MySQL.
 
-Trạng thái: **Đang thực hiện**. Chờ kiểm tra kỹ thuật và người học xác nhận.
-
 Kết quả kỹ thuật:
 
 - Typecheck và build thành công.
 - Kiểm thử trên MySQL thật đạt: list `200`, create `201`, detail `200`, update `200`, delete `204`, validation `400`, không tồn tại `404`.
 - Xóa mềm đổi đúng `isActive=false`.
 - Bản ghi kiểm thử đã được xóa vật lý sau kiểm tra; dữ liệu seed vẫn giữ 8 phim.
-- Chờ người học chạy các lệnh trong `docs/MOVIE_CRUD.md` và xác nhận.
+- Người học yêu cầu chuyển sang phần tiếp theo.
+
+Trạng thái: **Hoàn thành**.
 
 ## PHẦN 13 đã hoàn thành
 

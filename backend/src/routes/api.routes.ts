@@ -1,5 +1,6 @@
 import { Router } from "express";
 
+import { cinemaRouter } from "../modules/cinemas/cinema.routes.js";
 import { learningRouter } from "../modules/learning/learning.routes.js";
 import { movieRouter } from "../modules/movies/movie.routes.js";
 
@@ -16,3 +17,4 @@ apiRouter.get("/", (_request, response) => {
 
 apiRouter.use("/examples", learningRouter);
 apiRouter.use("/movies", movieRouter);
+apiRouter.use("/cinemas", cinemaRouter);
