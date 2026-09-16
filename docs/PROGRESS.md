@@ -1,12 +1,12 @@
 # Tiến độ xây dựng CineBook
 
-Cập nhật lần cuối: 2026-09-16
+Cập nhật lần cuối: 2026-09-17
 
 ## Tổng quan
 
-- Hoàn thành: **14/54 phần (25,9%)**
-- Đang thực hiện: **PHẦN 15 – CRUD rạp**.
-- Bước tiếp theo: chạy và xác nhận các API CRUD rạp.
+- Hoàn thành: **17/54 phần (31,5%)**
+- Đang thực hiện: chưa bắt đầu phần mới.
+- Bước tiếp theo: **PHẦN 18 – Quản lý suất chiếu**.
 
 Quy ước:
 
@@ -30,9 +30,9 @@ Quy ước:
 - [x] PHẦN 12 – Seed dữ liệu
 - [x] PHẦN 13 – REST API cơ bản
 - [x] PHẦN 14 – CRUD phim
-- [-] PHẦN 15 – CRUD rạp
-- [ ] PHẦN 16 – CRUD phòng chiếu
-- [ ] PHẦN 17 – CRUD ghế
+- [x] PHẦN 15 – CRUD rạp
+- [x] PHẦN 16 – CRUD phòng chiếu
+- [x] PHẦN 17 – CRUD ghế
 - [ ] PHẦN 18 – Quản lý suất chiếu
 - [ ] PHẦN 19 – Đăng ký tài khoản
 - [ ] PHẦN 20 – Đăng nhập JWT
@@ -110,7 +110,21 @@ Quy ước:
 - Đã chuẩn bị API học tập tại `/api/v1/examples` theo Route → Controller → Service
 - Agent đã xác minh HTTP `200`, `201`, `400`, `404`; chờ người học tự chạy và xác nhận
 
-## PHẦN 15 đang thực hiện
+## PHẦN 17 đã hoàn thành
+
+- CRUD ghế tại `/api/v1/seats`; hỗ trợ phân trang và lọc theo `roomId`, `type`, `active`.
+- Kiểm tra phòng cha, loại `STANDARD`/`VIP`, vị trí trùng và xóa mềm.
+- Typecheck/build và HTTP thực tế đạt `200`, `201`, `204`, `400`, `404`.
+- Dữ liệu kiểm thử đã dọn sạch; seed vẫn giữ 600 ghế.
+
+## PHẦN 16 đã hoàn thành
+
+- CRUD phòng tại `/api/v1/rooms`; hỗ trợ phân trang và lọc theo `cinemaId`, `active`.
+- Kiểm tra rạp cha, tên phòng trùng trong cùng rạp và xóa mềm.
+- Typecheck/build và HTTP thực tế đạt `200`, `201`, `204`, `400`, `404`.
+- Dữ liệu kiểm thử đã dọn sạch; seed vẫn giữ 15 phòng.
+
+## PHẦN 15 đã hoàn thành
 
 Đã chuẩn bị:
 
@@ -119,7 +133,7 @@ Quy ước:
 - Luồng Route → Controller → Service → Repository → Prisma → MySQL.
 - `DELETE` dùng xóa mềm để giữ nguyên phòng và dữ liệu lịch sử.
 
-Trạng thái: **Đang thực hiện**. Chờ kiểm tra kỹ thuật và người học xác nhận.
+Trạng thái: **Hoàn thành**.
 
 Kết quả kỹ thuật:
 
@@ -127,7 +141,7 @@ Kết quả kỹ thuật:
 - Kiểm thử MySQL thật đạt: list `200`, create `201`, detail `200`, update `200`, delete `204`, validation `400`, không tồn tại `404`.
 - Xóa mềm đổi đúng `isActive=false`.
 - Rạp kiểm thử đã được xóa vật lý sau kiểm tra; seed vẫn giữ 3 rạp và 15 phòng.
-- Chờ người học thực hành theo `docs/CINEMA_CRUD.md`.
+- Người học yêu cầu hoàn tất cùng Phần 16 và 17.
 
 ## PHẦN 14 đã hoàn thành
 
