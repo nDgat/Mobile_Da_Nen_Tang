@@ -1,0 +1,7 @@
+import type { NextFunction, Request, Response } from "express";
+import { listNotifications, markAllNotificationsRead, markNotificationRead, NotificationNotFoundError, NotificationValidationError } from "./notification.service.js";
+
+function handle(error: unknown, response: Response) { if (error instanceof NotificationValidationError) { response.status(400).json({ error: { code: "VALIDATION_ERROR", message: error.message } }); return true; } if (error instanceof NotificationNotFoundError) { response.status(404).json({ error: { code: "NOTIFICATION_NOT_FOUND", message: error.message } }); return true; } return false; }
+export async function listNotificationHandler(req: Request, res: Response, next: NextFunction) { try { res.json(await listNotifications(res.locals.auth.userId as number, req.query as Record<string, unknown>)); } catch (error) { if (!handle(error, res)) next(error); } }
+export async function readNotificationHandler(req: Request, res: Response, next: NextFunction) { try { await markNotificationRead(String(req.params.id), res.locals.auth.userId as number); res.status(204).send(); } catch (error) { if (!handle(error, res)) next(error); } }
+export async function readAllNotificationHandler(_req: Request, res: Response, next: NextFunction) { try { res.json({ data: { updated: await markAllNotificationsRead(res.locals.auth.userId as number) } }); } catch (error) { next(error); } }

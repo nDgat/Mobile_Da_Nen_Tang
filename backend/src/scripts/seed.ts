@@ -34,6 +34,18 @@ const showtimes = [
   { id: 120003, movieId: 120002, roomId: 120002, startsAt: new Date("2026-09-20T18:00:00+07:00"), endsAt: new Date("2026-09-20T19:40:00+07:00") },
   { id: 120004, movieId: 120001, roomId: 120002, startsAt: new Date("2026-09-20T20:30:00+07:00"), endsAt: new Date("2026-09-20T22:20:00+07:00") },
 ];
+const concessions = [
+  { id: 120001, name: "Bắp rang bơ cỡ vừa", description: "Bắp rang bơ truyền thống", category: "POPCORN" as const, price: "45000", sortOrder: 1 },
+  { id: 120002, name: "Bắp caramel cỡ lớn", description: "Bắp phủ caramel cỡ lớn", category: "POPCORN" as const, price: "65000", sortOrder: 2 },
+  { id: 120003, name: "Pepsi cỡ vừa", description: "Nước ngọt có ga 500 ml", category: "DRINK" as const, price: "30000", sortOrder: 3 },
+  { id: 120004, name: "Combo Solo", description: "1 bắp vừa và 1 nước vừa", category: "COMBO" as const, price: "79000", sortOrder: 4 },
+  { id: 120005, name: "Combo Couple", description: "1 bắp lớn và 2 nước vừa", category: "COMBO" as const, price: "129000", sortOrder: 5 },
+];
+const vouchers = [
+  { id: 120001, code: "CINE10", name: "Giảm 10%", description: "Giảm 10%, tối đa 50.000đ", discountType: "PERCENTAGE" as const, discountValue: "10", minOrderAmount: "100000", maxDiscountAmount: "50000", startsAt: new Date("2026-01-01T00:00:00+07:00"), endsAt: new Date("2027-12-31T23:59:59+07:00"), usageLimit: 1000 },
+  { id: 120002, code: "GIAM20K", name: "Giảm 20.000đ", description: "Áp dụng cho đơn từ 150.000đ", discountType: "FIXED" as const, discountValue: "20000", minOrderAmount: "150000", maxDiscountAmount: null, startsAt: new Date("2026-01-01T00:00:00+07:00"), endsAt: new Date("2027-12-31T23:59:59+07:00"), usageLimit: 1000 },
+  { id: 120003, code: "COMBO15", name: "Giảm 15%", description: "Đơn từ 250.000đ, giảm tối đa 60.000đ", discountType: "PERCENTAGE" as const, discountValue: "15", minOrderAmount: "250000", maxDiscountAmount: "60000", startsAt: new Date("2026-01-01T00:00:00+07:00"), endsAt: new Date("2027-12-31T23:59:59+07:00"), usageLimit: 500 },
+];
 
 // Giữ nguyên bốn suất cũ; bổ sung hai suất cho mỗi phòng mới.
 for (const [index, room] of rooms.slice(2).entries()) {
@@ -44,6 +56,18 @@ for (const [index, room] of rooms.slice(2).entries()) {
 }
 
 export async function seedSampleData(tx: Prisma.TransactionClient): Promise<void> {
+  await tx.voucher.createMany({ data: vouchers, skipDuplicates: true });
+  for (const voucher of vouchers) {
+    const stored = await tx.voucher.findUniqueOrThrow({ where: { id: voucher.id } });
+    assert.equal(stored.code, voucher.code, "ID voucher mẫu đã được sử dụng.");
+    assert.equal(stored.discountValue.toString(), voucher.discountValue, "Giá trị voucher mẫu không khớp.");
+  }
+  await tx.concessionProduct.createMany({ data: concessions, skipDuplicates: true });
+  for (const concession of concessions) {
+    const stored = await tx.concessionProduct.findUniqueOrThrow({ where: { id: concession.id } });
+    assert.equal(stored.name, concession.name, "ID bắp nước mẫu đã được sử dụng.");
+    assert.equal(stored.price.toString(), concession.price, "Giá bắp nước mẫu không khớp.");
+  }
   await tx.movie.createMany({
     data: movies.map(movie => ({ releaseDate: new Date("2026-09-01T00:00:00Z"), synopsis: "Phim hư cấu dùng để học lập trình CineBook.", ...movie })),
     skipDuplicates: true,
@@ -110,8 +134,10 @@ async function main(): Promise<void> {
     prisma.seat.count({ where: { roomId: { in: rooms.map(r => r.id) }, rowLabel: { in: ["A", "B", "C", "D", "E"] }, seatNumber: { gte: 1, lte: 8 } } }),
     prisma.showtime.count({ where: { id: { in: showtimes.map(s => s.id) } } }),
     prisma.showtimeSeat.count({ where: { showtimeId: { in: showtimes.map(s => s.id) } } }),
+    prisma.concessionProduct.count({ where: { id: { in: concessions.map(item => item.id) } } }),
+    prisma.voucher.count({ where: { id: { in: vouchers.map(item => item.id) } } }),
   ]);
-  console.log("Seed CineBook v1: phim / rạp / phòng / ghế / suất / ghế theo suất");
+  console.log("Seed CineBook v1: phim / rạp / phòng / ghế / suất / ghế theo suất / bắp nước / voucher");
   console.log(counts.join(" / "));
   console.log("Ngày mẫu: 20/09/2026, giờ Việt Nam. Giữ nguyên bản ghi đã tồn tại.");
 }

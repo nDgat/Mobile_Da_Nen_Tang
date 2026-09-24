@@ -67,7 +67,7 @@ export default function MoviesScreen() {
           <View style={styles.header}>
             <Text style={styles.eyebrow}>CINEBOOK COLLECTION</Text>
             <Text style={styles.heading}>Chọn bộ phim{"\n"}cho hôm nay</Text>
-            <Text style={styles.subheading}>{movies.length} phim đang hoạt động</Text>
+            <View style={styles.collectionRow}><Text style={styles.subheading}>{movies.length} phim đang hoạt động</Text><Link href={"/favorites" as Href} style={styles.favoriteLink}>♥ Phim yêu thích</Link></View>
             <View style={styles.searchBox}><Text style={styles.searchIcon}>⌕</Text><TextInput value={query} onChangeText={setQuery} placeholder="Tìm tên phim..." placeholderTextColor="#777B8D" style={styles.searchInput} returnKeyType="search" /></View>
             <View style={styles.filters}>
               <FilterButton label="Tất cả" active={filter === "ALL"} onPress={() => setFilter("ALL")} />
@@ -92,6 +92,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#0D0F17" }, help: { marginTop: 9, color: "#9296A7", fontSize: 13 },
   header: { paddingBottom: 22 }, eyebrow: { color: "#FF7089", fontSize: 10, fontWeight: "800", letterSpacing: 1.5 },
   heading: { marginTop: 7, color: "#FFFFFF", fontSize: 31, lineHeight: 37, fontWeight: "900", letterSpacing: -0.7 }, subheading: { marginTop: 8, color: "#969AAA", fontSize: 13 },
+  collectionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }, favoriteLink: { marginTop: 8, color: "#FF8198", fontSize: 12, fontWeight: "800" },
   searchBox: { flexDirection: "row", alignItems: "center", marginTop: 20, height: 52, paddingHorizontal: 15, borderRadius: 16, backgroundColor: "#181A25", borderWidth: 1, borderColor: "#2A2D3B" },
   searchIcon: { marginRight: 10, color: "#FF7089", fontSize: 24 }, searchInput: { flex: 1, height: "100%", color: "#FFFFFF", fontSize: 15 },
   filters: { flexDirection: "row", gap: 10, marginTop: 14 }, filterButton: { paddingHorizontal: 15, paddingVertical: 9, borderRadius: 20, backgroundColor: "#1B1D29" },

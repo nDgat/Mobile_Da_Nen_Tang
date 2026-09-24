@@ -57,6 +57,12 @@ function readJwtSecret(): string {
   return secret;
 }
 
+function readLogLevel(value: string | undefined): "debug" | "info" | "warn" | "error" | "silent" {
+  const level = value ?? "info";
+  if (level !== "debug" && level !== "info" && level !== "warn" && level !== "error" && level !== "silent") throw new Error("LOG_LEVEL phải là debug, info, warn, error hoặc silent.");
+  return level;
+}
+
 export const env = {
   database: {
     host: process.env.MYSQL_HOST ?? "127.0.0.1",
@@ -74,5 +80,6 @@ export const env = {
     refreshTtlSeconds: readPositiveInteger(process.env.JWT_REFRESH_TTL_SECONDS, 2_592_000),
   },
   nodeEnv: process.env.NODE_ENV ?? "development",
+  logLevel: readLogLevel(process.env.LOG_LEVEL),
   port: readPort(process.env.PORT, DEFAULT_PORT),
 };

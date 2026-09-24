@@ -4,9 +4,9 @@ Cập nhật lần cuối: 2026-09-24
 
 ## Tổng quan
 
-- Hoàn thành: **30/54 phần (55,6%)**
+- Hoàn thành: **44/54 phần (81,5%)**
 - Đang thực hiện: chưa bắt đầu phần mới.
-- Bước tiếp theo: **PHẦN 31 – Tính tiền**.
+- Bước tiếp theo: **PHẦN 45 – Audit Log**.
 
 Quy ước:
 
@@ -46,20 +46,20 @@ Quy ước:
 - [x] PHẦN 28 – Sơ đồ ghế
 - [x] PHẦN 29 – Giữ ghế
 - [x] PHẦN 30 – Đặt vé
-- [ ] PHẦN 31 – Tính tiền
-- [ ] PHẦN 32 – Bắp nước
-- [ ] PHẦN 33 – Voucher
-- [ ] PHẦN 34 – Payment Mock
-- [ ] PHẦN 35 – QR Code
-- [ ] PHẦN 36 – Vé điện tử
-- [ ] PHẦN 37 – Lịch sử đặt vé
-- [ ] PHẦN 38 – Notification
-- [ ] PHẦN 39 – Review
-- [ ] PHẦN 40 – Favorite
-- [ ] PHẦN 41 – Admin API
-- [ ] PHẦN 42 – Validation
-- [ ] PHẦN 43 – Error Handling
-- [ ] PHẦN 44 – Logging
+- [x] PHẦN 31 – Tính tiền
+- [x] PHẦN 32 – Bắp nước
+- [x] PHẦN 33 – Voucher
+- [x] PHẦN 34 – Payment Mock
+- [x] PHẦN 35 – QR Code
+- [x] PHẦN 36 – Vé điện tử
+- [x] PHẦN 37 – Lịch sử đặt vé
+- [x] PHẦN 38 – Notification
+- [x] PHẦN 39 – Review
+- [x] PHẦN 40 – Favorite
+- [x] PHẦN 41 – Admin API
+- [x] PHẦN 42 – Validation
+- [x] PHẦN 43 – Error Handling
+- [x] PHẦN 44 – Logging
 - [ ] PHẦN 45 – Audit Log
 - [ ] PHẦN 46 – Swagger
 - [ ] PHẦN 47 – Unit Test
@@ -76,7 +76,7 @@ Quy ước:
 ### Seed dữ liệu
 
 - Người học đã chạy `npm run db:seed` thành công.
-- 8 phim, 3 rạp, mỗi rạp 5 phòng: tổng 15 phòng, 600 ghế, 30 suất và 1200 ghế theo suất.
+- 8 phim, 3 rạp, mỗi rạp 5 phòng: tổng 15 phòng, 600 ghế, 30 suất, 1200 ghế theo suất, 5 sản phẩm bắp nước và 3 voucher.
 - Lịch mẫu ngày 20/09/2026 thuộc 2 phim demo; 6 phim thật bổ sung chưa có suất.
 
 ### Môi trường
@@ -109,6 +109,131 @@ Quy ước:
 - `GET /health/prisma` trả status `ok`
 - Đã chuẩn bị API học tập tại `/api/v1/examples` theo Route → Controller → Service
 - Agent đã xác minh HTTP `200`, `201`, `400`, `404`; chờ người học tự chạy và xác nhận
+
+## PHẦN 44 đã hoàn thành
+
+- Log backend theo JSON một dòng với timestamp, level, service và event.
+- Mỗi HTTP request ghi requestId, method, path, status, thời gian xử lý và user nếu đã xác thực.
+- Không ghi query, body, Authorization; các key password/token/secret/cookie được tự động che.
+- Hỗ trợ `LOG_LEVEL`: debug, info, warn, error hoặc silent.
+- Lifecycle server, kết nối database, shutdown, lỗi 500 và lỗi process đều có log.
+- Backend typecheck/build, kiểm thử redaction và log trực tiếp trên server đang chạy thành công.
+
+## PHẦN 43 đã hoàn thành
+
+- Thêm `ApiError` và middleware xử lý lỗi tập trung cho Express.
+- Mỗi request có `X-Request-Id`; lỗi trung tâm trả cùng mã để truy vết.
+- Chuẩn hóa lỗi malformed JSON, validation, route không tồn tại và Prisma phổ biến.
+- Lỗi không dự kiến trả thông báo `500` an toàn, không lộ stack hoặc nội dung nội bộ.
+- Mobile `ApiError` giữ status, code, requestId và chi tiết từng trường.
+- Backend/mobile typecheck, build và kiểm thử HTTP 400/404/500 thành công.
+
+## PHẦN 42 đã hoàn thành
+
+- Thêm Zod 4 và middleware validation dùng chung cho request Express.
+- Kiểm tra đồng thời `body`, `params` và `query` trước khi vào controller.
+- Lỗi `400 VALIDATION_ERROR` chứa danh sách trường, thông báo và mã lỗi cụ thể.
+- Áp dụng schema cho auth, booking, payment, review, favorite, notification và admin.
+- Các service vẫn giữ kiểm tra nghiệp vụ và quyền sở hữu sau validation đầu vào.
+- Backend typecheck/build và kiểm thử HTTP nhiều nhóm route thành công.
+
+## PHẦN 41 đã hoàn thành
+
+- Tất cả endpoint `/api/v1/admin` yêu cầu JWT và vai trò `ADMIN`.
+- Dashboard tổng hợp người dùng, phim, rạp, booking, doanh thu, trạng thái và đơn gần nhất.
+- Admin có thể tìm/lọc người dùng, khóa/mở tài khoản và không thể tự khóa chính mình.
+- Danh sách booking hỗ trợ phân trang, trạng thái và tìm theo mã đơn/email.
+- Danh sách review hỗ trợ lọc và bật/tắt hiển thị để kiểm duyệt.
+- Backend typecheck/build và kiểm thử HTTP + MySQL thành công.
+
+## PHẦN 40 đã hoàn thành
+
+- Mỗi người dùng có danh sách phim yêu thích riêng trong MySQL.
+- API hỗ trợ lấy trạng thái, thêm lặp an toàn, xóa lặp an toàn và danh sách phân trang.
+- Chỉ phim đang hoạt động mới được thêm vào yêu thích.
+- Trang chi tiết phim có nút tim và phản hồi trạng thái rõ ràng.
+- Mobile có màn hình phim yêu thích và thao tác bỏ nhanh khỏi danh sách.
+- Migration không drift; build/typecheck và kiểm thử MySQL thành công.
+
+## PHẦN 39 đã hoàn thành
+
+- Mỗi người dùng có tối đa một đánh giá cho mỗi phim và có thể cập nhật hoặc xóa.
+- Chỉ người đã có booking `CONFIRMED` của phim mới được gửi đánh giá.
+- Backend kiểm tra điểm nguyên từ 1–5, bình luận tối đa 1.000 ký tự và quyền sở hữu.
+- API công khai trả danh sách, tổng lượt và điểm trung bình của phim.
+- Trang chi tiết phim có form sao, bình luận và danh sách đánh giá khán giả.
+- Migration không drift; build/typecheck và kiểm thử MySQL thành công.
+
+## PHẦN 38 đã hoàn thành
+
+- Thêm bảng Notification và tự tạo thông báo khi thanh toán thành công.
+- API danh sách có phân trang, số chưa đọc, đọc một thông báo và đọc tất cả.
+- Mobile có trung tâm thông báo, badge chưa đọc và điều hướng tới vé liên quan.
+- Vé điện tử cho phép đặt lời nhắc cục bộ trước giờ chiếu 30 phút trên iPhone.
+- Nhấn thông báo giờ chiếu sẽ mở đúng vé điện tử.
+- Migration không drift; build/typecheck, kiểm thử MySQL và Expo Doctor 18/18 thành công.
+
+## PHẦN 37 đã hoàn thành
+
+- Thêm API lịch sử chỉ trả các booking thuộc người dùng đang đăng nhập.
+- Hỗ trợ phân trang, giới hạn tối đa 50 bản ghi và lọc theo trạng thái booking.
+- Mobile có màn hình lịch sử, kéo để làm mới và tự tải trang tiếp theo.
+- Có bộ lọc tất cả, đã thanh toán, chờ xử lý, đã hủy và hết hạn.
+- Đơn đã thanh toán mở vé điện tử; các trạng thái khác mở chi tiết đơn.
+- Backend typecheck/build, mobile TypeScript và kiểm thử MySQL thành công.
+
+## PHẦN 36 đã hoàn thành
+
+- Thêm màn hình vé điện tử riêng cho booking đã thanh toán thành công.
+- Vé hiển thị QR, phim, suất chiếu, rạp, phòng, ghế, người đặt, bắp nước, voucher và giao dịch.
+- Vé được lưu trong SecureStore sau lần tải thành công và có thể mở khi mạng gián đoạn.
+- Người dùng có thể chia sẻ thông tin vé bằng chức năng Share của điện thoại.
+- Màn hình booking có nút mở vé điện tử sau khi thanh toán.
+- Backend typecheck/build và TypeScript mobile thành công.
+
+## PHẦN 35 đã hoàn thành
+
+- Backend chỉ cấp QR cho vé thuộc người dùng và booking đã thanh toán thành công.
+- QR chứa payload có chữ ký HMAC; dữ liệu bị sửa sẽ bị từ chối.
+- Thêm API lấy QR của booking và API dành cho ADMIN để xác minh QR tại cổng soát vé.
+- Kết quả xác minh luôn đối chiếu booking `CONFIRMED` hiện tại trong MySQL.
+- Mobile hiển thị QR cùng phim, giờ chiếu, phòng, ghế và mã vé sau thanh toán.
+- Backend typecheck/build, mobile TypeScript, kiểm thử chữ ký và Expo Doctor 18/18 đều thành công.
+
+## PHẦN 34 đã hoàn thành
+
+- API mô phỏng ba kết quả thanh toán: thành công, thất bại và người dùng hủy.
+- Số tiền lấy từ đơn trên MySQL; dữ liệu amount giả từ client bị bỏ qua.
+- Giao dịch lỗi/hủy vẫn giữ đơn để thử lại; thành công chuyển đơn sang CONFIRMED và ghế sang BOOKED.
+- Yêu cầu thành công gửi lại không tạo giao dịch trùng và voucher chỉ tăng một lượt sử dụng.
+- Mobile có bảng thanh toán thử nghiệm và hiển thị mã giao dịch thành công.
+- Migration không drift; build/typecheck và kiểm thử MySQL thành công.
+
+## PHẦN 33 đã hoàn thành
+
+- Seed 3 voucher giảm cố định/phần trăm với thời hạn, mức chi tối thiểu và mức giảm tối đa.
+- API công khai trả voucher khả dụng; người dùng nhập, chọn gợi ý, áp dụng hoặc gỡ mã.
+- Backend chuẩn hóa mã, kiểm tra điều kiện và tự tính lại giảm giá từ dữ liệu MySQL.
+- Voucher được tính lại hoặc tự gỡ nếu thay đổi bắp nước làm đơn không còn đủ điều kiện.
+- Chỉ chủ đơn PENDING được sửa voucher; dữ liệu giảm giá giả từ client bị bỏ qua.
+- Migration không drift; build/typecheck và kiểm thử MySQL thành công.
+
+## PHẦN 32 đã hoàn thành
+
+- Danh mục MySQL có 5 sản phẩm thuộc nhóm bắp, nước và combo; seed chạy lặp an toàn.
+- API công khai trả sản phẩm đang bán; người dùng chỉ sửa bắp nước của đơn do mình sở hữu.
+- Mỗi sản phẩm chọn tối đa 10 phần; backend lấy giá thật, lưu snapshot và tính lại tổng trong transaction.
+- Không thể sửa bắp nước sau khi đơn chuyển sang chờ thanh toán.
+- Mobile có bộ tăng/giảm số lượng, lưu lựa chọn và tự lưu trước khi xác nhận đơn.
+- Migration không drift; build/typecheck và kiểm thử MySQL thành công.
+
+## PHẦN 31 đã hoàn thành
+
+- Backend tự tính tiền từ giá ghế lưu trong MySQL, không nhận tổng tiền do client gửi lên.
+- Phí dịch vụ cố định 5.000đ mỗi ghế; cấu trúc giá đã sẵn sàng cho bắp nước và voucher.
+- Response đơn gồm tiền ghế, phí dịch vụ, bắp nước, giảm giá và tổng thanh toán.
+- Mobile hiển thị từng thành phần giá và làm nổi bật tổng cuối.
+- Migration đồng bộ, không drift; build/typecheck và kiểm thử MySQL thành công.
 
 ## PHẦN 30 đã hoàn thành
 

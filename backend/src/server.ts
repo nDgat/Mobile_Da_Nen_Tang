@@ -8,15 +8,15 @@ import {
   checkPrismaConnection,
   closePrismaConnection,
 } from "./database/prisma.js";
+import { logger } from "./logging/logger.js";
 
 const database = await checkDatabaseConnection();
 const prismaVersion = await checkPrismaConnection();
 
-console.log(`Đã kết nối MySQL ${database.version}, database ${database.name}.`);
-console.log(`Prisma đã kết nối MySQL ${prismaVersion}.`);
+logger.info("database.connected", { mysqlVersion: database.version, database: database.name, prismaMysqlVersion: prismaVersion });
 
 const server = app.listen(env.port, env.host, () => {
-  console.log(`CineBook API đang chạy tại http://${env.host}:${env.port} (${env.nodeEnv})`);
+  logger.info("server.started", { host: env.host, port: env.port, environment: env.nodeEnv });
 });
 
 let isShuttingDown = false;
@@ -27,18 +27,18 @@ function shutdown(signal: string): void {
   }
 
   isShuttingDown = true;
-  console.log(`Đã nhận ${signal}. Đang dừng CineBook API...`);
+  logger.info("server.shutdown.started", { signal });
 
   server.close((error) => {
     if (error) {
-      console.error("Không thể dừng server an toàn:", error);
+      logger.error("server.shutdown.failed", { error });
       process.exit(1);
     }
 
     void Promise.all([closeDatabaseConnection(), closePrismaConnection()])
-      .then(() => process.exit(0))
+      .then(() => { logger.info("server.shutdown.completed", { signal }); process.exit(0); })
       .catch((databaseError: unknown) => {
-        console.error("Không thể đóng kết nối MySQL:", databaseError);
+        logger.error("database.shutdown.failed", { error: databaseError });
         process.exit(1);
       });
   });
@@ -46,3 +46,5 @@ function shutdown(signal: string): void {
 
 process.on("SIGINT", () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("uncaughtException", error => { logger.error("process.uncaught_exception", { error }); shutdown("uncaughtException"); });
+process.on("unhandledRejection", reason => { logger.error("process.unhandled_rejection", { error: reason }); shutdown("unhandledRejection"); });

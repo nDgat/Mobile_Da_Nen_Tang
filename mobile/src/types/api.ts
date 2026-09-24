@@ -54,7 +54,80 @@ export interface SeatHold {
   showtimeId: number;
   expiresAt: string;
   totalAmount: string;
+  pricing: BookingPricing;
   seats: { id: number; label: string; price: string }[];
+}
+
+export interface BookingPricing {
+  seatSubtotal: string;
+  serviceFee: string;
+  concessionSubtotal: string;
+  discountAmount: string;
+  totalAmount: string;
+}
+
+export interface ConcessionProduct {
+  id: number;
+  name: string;
+  description: string | null;
+  category: "POPCORN" | "DRINK" | "COMBO";
+  price: string;
+  imageUrl: string | null;
+}
+
+export interface BookingConcessionItem {
+  id: number;
+  productId: number;
+  name: string;
+  unitPrice: string;
+  quantity: number;
+  lineTotal: string;
+}
+
+export interface Voucher {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+  discountType: "FIXED" | "PERCENTAGE";
+  discountValue: string;
+  minOrderAmount: string;
+  maxDiscountAmount: string | null;
+  startsAt?: string;
+  endsAt?: string;
+}
+
+export interface Payment {
+  id: number;
+  code: string;
+  provider: string;
+  amount: string;
+  status: "SUCCEEDED" | "FAILED" | "CANCELLED";
+  failureReason: string | null;
+  completedAt: string;
+}
+
+export interface MockPaymentResponse {
+  payment: Payment;
+  bookingStatus: "AWAITING_PAYMENT" | "CONFIRMED";
+  idempotent: boolean;
+}
+
+export interface Ticket {
+  bookingId: number;
+  bookingCode: string;
+  qrValue: string;
+  holder: { fullName: string; email: string };
+  movie: { id: number; title: string };
+  cinema: { id: number; name: string; address: string; city: string };
+  room: { id: number; name: string };
+  showtime: { id: number; startsAt: string; endsAt: string };
+  seats: string[];
+  concessions: { name: string; quantity: number }[];
+  voucherCode: string | null;
+  totalAmount: string;
+  confirmedAt: string | null;
+  paymentCode: string | null;
 }
 
 export interface BookingDetails {
@@ -65,12 +138,69 @@ export interface BookingDetails {
   expiresAt: string;
   confirmedAt: string | null;
   totalAmount: string;
+  pricing: BookingPricing;
   createdAt: string;
   movie: { id: number; title: string; posterUrl: string | null; durationMinutes: number };
   cinema: { id: number; name: string; address: string; city: string };
   room: { id: number; name: string };
   showtime: { id: number; startsAt: string; endsAt: string };
   seats: { id: number; label: string; price: string }[];
+  concessions: BookingConcessionItem[];
+  voucher: Voucher | null;
+  latestPayment: Payment | null;
+}
+
+export type BookingStatus = "PENDING" | "AWAITING_PAYMENT" | "CONFIRMED" | "CANCELLED" | "EXPIRED";
+
+export interface BookingHistoryItem {
+  id: number;
+  code: string;
+  status: BookingStatus;
+  totalAmount: string;
+  createdAt: string;
+  confirmedAt: string | null;
+  movie: { id: number; title: string; posterUrl: string | null };
+  cinemaName: string;
+  roomName: string;
+  startsAt: string;
+  seats: string[];
+}
+
+export interface AppNotification {
+  id: number;
+  userId: number;
+  bookingId: number | null;
+  type: "BOOKING_CONFIRMED" | "SHOWTIME_REMINDER" | "SYSTEM";
+  title: string;
+  body: string;
+  isRead: boolean;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationPage {
+  data: AppNotification[];
+  meta: { page: number; limit: number; total: number; totalPages: number; unread: number };
+}
+
+export interface MovieReview {
+  id: number;
+  rating: number;
+  comment: string | null;
+  reviewerName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReviewPage {
+  data: MovieReview[];
+  meta: { page: number; limit: number; total: number; totalPages: number; averageRating: number };
+}
+
+export interface FavoriteItem {
+  id: number;
+  createdAt: string;
+  movie: Movie;
 }
 
 export interface PaginatedResponse<T> {

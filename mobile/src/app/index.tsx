@@ -3,7 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 import { HomeMovieCard } from "../components/HomeMovieCard";
-import { getHomeData } from "../services/api";
+import { getHomeData, getNotifications } from "../services/api";
 import type { Movie, Showtime } from "../types/api";
 
 interface HomeData { movies: Movie[]; showtimes: Showtime[]; movieTotal: number; showtimeTotal: number; cinemaTotal: number; }
@@ -16,6 +16,7 @@ export default function HomeScreen() {
   const [data, setData] = useState<HomeData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [unread, setUnread] = useState(0);
 
   const loadData = useCallback(async (signal?: AbortSignal) => {
     try { setError(null); setData(await getHomeData(signal)); }
@@ -23,6 +24,7 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => { const controller = new AbortController(); void loadData(controller.signal); return () => controller.abort(); }, [loadData]);
+  useEffect(() => { void getNotifications(1, true).then(result => setUnread(result.meta.unread)).catch(() => undefined); }, []);
   const onRefresh = useCallback(async () => { setRefreshing(true); await loadData(); setRefreshing(false); }, [loadData]);
 
   const nextShowtimeByMovie = useMemo(() => {
@@ -41,7 +43,7 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF526F" />}>
         <View style={styles.header}>
           <View><Text style={styles.eyebrow}>CHÀO MỪNG ĐẾN</Text><Text style={styles.brand}>CineBook</Text></View>
-          <View style={styles.avatar}><Text style={styles.avatarText}>CB</Text></View>
+          <View style={styles.headerActions}><Link href={"/notifications" as Href} asChild><Pressable style={styles.notificationButton}><Text style={styles.notificationText}>🔔</Text>{unread > 0 && <Text style={styles.unreadBadge}>{unread > 9 ? "9+" : unread}</Text>}</Pressable></Link><Link href={"/bookings" as Href} asChild><Pressable style={styles.myTickets}><Text style={styles.myTicketsText}>Vé của tôi</Text></Pressable></Link></View>
         </View>
 
         <View style={styles.hero}>
@@ -87,7 +89,8 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#0D0F17" }, content: { paddingBottom: 42 },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20, paddingTop: 16, paddingBottom: 18 },
   eyebrow: { color: "#8F94A7", fontSize: 10, fontWeight: "700", letterSpacing: 2 }, brand: { marginTop: 2, color: "#FFFFFF", fontSize: 27, fontWeight: "900", letterSpacing: -0.7 },
-  avatar: { width: 42, height: 42, alignItems: "center", justifyContent: "center", borderRadius: 21, backgroundColor: "#FF526F" }, avatarText: { color: "#FFFFFF", fontSize: 13, fontWeight: "800" },
+  myTickets: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: "#252836" }, myTicketsText: { color: "#FFFFFF", fontSize: 11, fontWeight: "800" },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 8 }, notificationButton: { width: 38, height: 38, alignItems: "center", justifyContent: "center", borderRadius: 19, backgroundColor: "#252836" }, notificationText: { fontSize: 15 }, unreadBadge: { position: "absolute", top: -3, right: -3, minWidth: 17, height: 17, paddingHorizontal: 3, borderRadius: 9, overflow: "hidden", backgroundColor: "#FF526F", color: "#FFFFFF", fontSize: 9, fontWeight: "900", textAlign: "center", lineHeight: 17 },
   hero: { marginHorizontal: 20, padding: 24, overflow: "hidden", borderRadius: 26, backgroundColor: "#3D1730", borderWidth: 1, borderColor: "#692744" },
   heroLabel: { color: "#FF99AD", fontSize: 11, fontWeight: "800", letterSpacing: 1.4 }, heroTitle: { marginTop: 10, color: "#FFFFFF", fontSize: 31, fontWeight: "900", lineHeight: 37, letterSpacing: -0.8 },
   heroText: { marginTop: 12, maxWidth: 290, color: "#D7B9C5", fontSize: 14, lineHeight: 21 }, primaryButton: { alignSelf: "flex-start", marginTop: 22, paddingHorizontal: 18, paddingVertical: 13, borderRadius: 14, backgroundColor: "#FF526F" }, primaryButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" },

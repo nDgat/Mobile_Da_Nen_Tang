@@ -1,9 +1,11 @@
 import { Router } from "express";
 import { loginHandler, logoutHandler, meHandler, refreshHandler, registerHandler } from "./auth.controller.js";
 import { requireAuthentication } from "./auth.middleware.js";
+import { validateRequest } from "../../validation/request-validation.js";
+import { authSchemas } from "../../validation/schemas.js";
 export const authRouter = Router();
-authRouter.post("/register", registerHandler);
-authRouter.post("/login", loginHandler);
+authRouter.post("/register", validateRequest({ body: authSchemas.register }), registerHandler);
+authRouter.post("/login", validateRequest({ body: authSchemas.login }), loginHandler);
 authRouter.get("/me", requireAuthentication, meHandler);
-authRouter.post("/refresh", refreshHandler);
-authRouter.post("/logout", logoutHandler);
+authRouter.post("/refresh", validateRequest({ body: authSchemas.refresh }), refreshHandler);
+authRouter.post("/logout", validateRequest({ body: authSchemas.refresh }), logoutHandler);
