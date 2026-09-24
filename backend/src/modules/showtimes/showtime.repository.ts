@@ -34,3 +34,11 @@ export async function insertShowtimeWithSeats(data: { movieId: number; roomId: n
 
 export const updateShowtimeStatus = (id: number, status: ShowtimeStatus) => prisma.showtime.update({ where: { id }, data: { status } });
 
+export const findShowtimeSeatMap = (showtimeId: number) => prisma.showtime.findUnique({
+  where: { id: showtimeId },
+  include: {
+    movie: { select: { id: true, title: true } },
+    room: { select: { id: true, name: true, cinema: { select: { id: true, name: true } } } },
+    seats: { include: { seat: true }, orderBy: { seat: { rowLabel: "asc" } } },
+  },
+});

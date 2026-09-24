@@ -1,12 +1,12 @@
 # Tiến độ xây dựng CineBook
 
-Cập nhật lần cuối: 2026-09-17
+Cập nhật lần cuối: 2026-09-24
 
 ## Tổng quan
 
-- Hoàn thành: **22/54 phần (40,7%)**
+- Hoàn thành: **30/54 phần (55,6%)**
 - Đang thực hiện: chưa bắt đầu phần mới.
-- Bước tiếp theo: **PHẦN 23 – App Home**.
+- Bước tiếp theo: **PHẦN 31 – Tính tiền**.
 
 Quy ước:
 
@@ -38,14 +38,14 @@ Quy ước:
 - [x] PHẦN 20 – Đăng nhập JWT
 - [x] PHẦN 21 – Refresh Token
 - [x] PHẦN 22 – Phân quyền
-- [ ] PHẦN 23 – App Home
-- [ ] PHẦN 24 – Danh sách phim
-- [ ] PHẦN 25 – Chi tiết phim
-- [ ] PHẦN 26 – Chọn rạp
-- [ ] PHẦN 27 – Chọn ngày và suất chiếu
-- [ ] PHẦN 28 – Sơ đồ ghế
-- [ ] PHẦN 29 – Giữ ghế
-- [ ] PHẦN 30 – Đặt vé
+- [x] PHẦN 23 – App Home
+- [x] PHẦN 24 – Danh sách phim
+- [x] PHẦN 25 – Chi tiết phim
+- [x] PHẦN 26 – Chọn rạp
+- [x] PHẦN 27 – Chọn ngày và suất chiếu
+- [x] PHẦN 28 – Sơ đồ ghế
+- [x] PHẦN 29 – Giữ ghế
+- [x] PHẦN 30 – Đặt vé
 - [ ] PHẦN 31 – Tính tiền
 - [ ] PHẦN 32 – Bắp nước
 - [ ] PHẦN 33 – Voucher
@@ -109,6 +109,67 @@ Quy ước:
 - `GET /health/prisma` trả status `ok`
 - Đã chuẩn bị API học tập tại `/api/v1/examples` theo Route → Controller → Service
 - Agent đã xác minh HTTP `200`, `201`, `400`, `404`; chờ người học tự chạy và xác nhận
+
+## PHẦN 30 đã hoàn thành
+
+- API đọc và xác nhận đơn chỉ cho đúng người sở hữu đã đăng nhập.
+- Đơn chuyển từ PENDING sang AWAITING_PAYMENT; yêu cầu gửi lại an toàn và không tạo đơn trùng.
+- Ghế tiếp tục được giữ thêm 10 phút để thanh toán; đơn hủy hoặc hết hạn tự trả ghế về AVAILABLE.
+- Mobile có màn hình kiểm tra phim, rạp, suất, từng ghế, tạm tính và trạng thái đơn.
+- Migration đồng bộ, không drift; backend build/typecheck, TypeScript mobile và kiểm thử MySQL đều thành công.
+
+## PHẦN 29 đã hoàn thành
+
+- API xác thực giữ tối đa 8 ghế trong 5 phút và cho phép người giữ chủ động hủy.
+- Transaction khóa hàng bằng `SELECT ... FOR UPDATE`, nên hai tài khoản không thể giữ cùng ghế.
+- Lượt giữ hết hạn được chuyển sang EXPIRED và ghế tự trả về AVAILABLE khi đọc sơ đồ.
+- Mobile lưu JWT bằng SecureStore, hỗ trợ đăng ký/đăng nhập, refresh token và đếm ngược thời gian giữ.
+- Kiểm thử MySQL thật đạt cho giữ đồng thời, tranh chấp, hủy và tự hết hạn; backend build và TypeScript mobile thành công.
+
+## PHẦN 28 đã hoàn thành
+
+- API `GET /api/v1/showtimes/:id/seats` trả thông tin phim/rạp/phòng và ghế theo suất.
+- Mobile hiển thị sơ đồ theo hàng, loại STANDARD/VIP và trạng thái AVAILABLE/HELD/BOOKED.
+- Ghế AVAILABLE được chọn cục bộ, tối đa 8 ghế; tổng tiền cập nhật tức thời.
+- API seed trả đúng 40 ghế; backend build và TypeScript mobile thành công.
+
+## PHẦN 27 đã hoàn thành
+
+- Route chọn ngày/suất nhận movieId và cinemaId từ bước chọn rạp.
+- Suất được lọc theo các phòng của rạp, bỏ lịch đã qua và nhóm theo ngày.
+- Hiển thị giờ bắt đầu/kết thúc, phòng, định dạng và trạng thái được chọn.
+- Có loading, lỗi/thử lại, empty state và pull-to-refresh.
+- TypeScript kiểm tra thành công.
+
+## PHẦN 26 đã hoàn thành
+
+- Route `/movies/[id]/cinemas` chỉ hiển thị rạp có suất sắp tới của phim.
+- Kết hợp dữ liệu showtime → room → cinema từ REST API.
+- Người dùng chọn một rạp, thấy địa chỉ, thành phố, suất gần nhất và tổng số suất.
+- Có loading, lỗi/thử lại, empty state và pull-to-refresh.
+- TypeScript kiểm tra thành công.
+
+## PHẦN 25 đã hoàn thành
+
+- Route động `/movies/[id]` tải phim và các suất sắp tới từ API.
+- Hiển thị poster/placeholder, tiêu đề, thời lượng, ngày phát hành, nội dung và lịch chiếu.
+- Home và danh sách phim đều mở được màn hình chi tiết.
+- Có loading, lỗi/thử lại, pull-to-refresh và ID không hợp lệ.
+- TypeScript kiểm tra thành công.
+
+## PHẦN 24 đã hoàn thành
+
+- Danh sách phim tải dữ liệu thật từ API, có tìm kiếm và lọc phim có lịch chiếu.
+- Thẻ phim hiển thị poster/placeholder, mô tả, thời lượng và số suất sắp tới.
+- Có loading, lỗi/thử lại, danh sách rỗng và kéo để tải lại.
+- TypeScript kiểm tra thành công.
+
+## PHẦN 23 đã hoàn thành
+
+- Home mới có hero, thống kê, phim nổi bật, suất gần nhất, kéo để tải lại và trạng thái lỗi.
+- Mobile tự lấy IP của Metro để gọi backend cổng 3000; có thể ghi đè bằng `EXPO_PUBLIC_API_URL`.
+- Dữ liệu phim/rạp/suất được tải từ REST API thật.
+- TypeScript đạt; Expo Doctor bị timeout khi gọi Expo API, không phải lỗi mã nguồn.
 
 ## PHẦN 22 đã hoàn thành
 

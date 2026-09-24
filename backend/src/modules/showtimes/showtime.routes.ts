@@ -1,8 +1,11 @@
 import { Router } from "express";
 import { requireAuthentication, requireRole } from "../auth/auth.middleware.js";
-import { createShowtimeHandler, getShowtimeHandler, listShowtimeHandler, statusShowtimeHandler } from "./showtime.controller.js";
+import { holdSeatsHandler } from "../bookings/booking.controller.js";
+import { createShowtimeHandler, getShowtimeHandler, listShowtimeHandler, seatMapShowtimeHandler, statusShowtimeHandler } from "./showtime.controller.js";
 export const showtimeRouter = Router();
 showtimeRouter.get("/", listShowtimeHandler);
 showtimeRouter.get("/:id", getShowtimeHandler);
+showtimeRouter.get("/:id/seats", seatMapShowtimeHandler);
+showtimeRouter.post("/:id/hold-seats", requireAuthentication, holdSeatsHandler);
 showtimeRouter.post("/", requireAuthentication, requireRole("ADMIN"), createShowtimeHandler);
 showtimeRouter.patch("/:id/status", requireAuthentication, requireRole("ADMIN"), statusShowtimeHandler);

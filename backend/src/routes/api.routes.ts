@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import { authRouter } from "../modules/auth/auth.routes.js";
+import { bookingRouter } from "../modules/bookings/booking.routes.js";
 import { cinemaRouter } from "../modules/cinemas/cinema.routes.js";
 import { learningRouter } from "../modules/learning/learning.routes.js";
 import { movieRouter } from "../modules/movies/movie.routes.js";
@@ -26,3 +27,4 @@ apiRouter.use("/rooms", roomRouter);
 apiRouter.use("/seats", seatRouter);
 apiRouter.use("/showtimes", showtimeRouter);
 apiRouter.use("/auth", authRouter);
+apiRouter.use("/bookings", bookingRouter);

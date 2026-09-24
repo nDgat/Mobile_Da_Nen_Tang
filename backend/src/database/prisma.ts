@@ -4,6 +4,7 @@ import { PrismaClient } from "../generated/prisma/client.js";
 import { env } from "../config/env.js";
 
 const adapter = new PrismaMariaDb({
+  allowPublicKeyRetrieval: true,
   connectionLimit: 5,
   database: env.database.name,
   host: env.database.host,

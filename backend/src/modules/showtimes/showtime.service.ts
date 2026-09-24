@@ -1,5 +1,6 @@
 import type { Showtime, ShowtimeStatus } from "../../generated/prisma/client.js";
-import { countActiveRoomSeats, findMovieForShowtime, findOverlappingShowtime, findRoomForShowtime, findShowtimeById, findShowtimePage, insertShowtimeWithSeats, updateShowtimeStatus } from "./showtime.repository.js";
+import { countActiveRoomSeats, findMovieForShowtime, findOverlappingShowtime, findRoomForShowtime, findShowtimeById, findShowtimePage, findShowtimeSeatMap, insertShowtimeWithSeats, updateShowtimeStatus } from "./showtime.repository.js";
+import { cleanupExpiredHolds } from "../bookings/booking.repository.js";
 
 export class ShowtimeValidationError extends Error {}
 export class ShowtimeNotFoundError extends Error { constructor(id: number) { super(`Không tìm thấy suất chiếu có ID ${id}.`); } }
@@ -52,3 +53,18 @@ export async function changeShowtimeStatus(id: number, value: unknown) {
   return toDto(await updateShowtimeStatus(id, status(body.status)));
 }
 
+export async function getShowtimeSeatMap(id: number) {
+  await cleanupExpiredHolds();
+  const showtime = await findShowtimeSeatMap(id);
+  if (!showtime) throw new ShowtimeNotFoundError(id);
+  return {
+    showtime: { id: showtime.id, startsAt: showtime.startsAt.toISOString(), endsAt: showtime.endsAt.toISOString(), status: showtime.status },
+    movie: showtime.movie,
+    room: { id: showtime.room.id, name: showtime.room.name },
+    cinema: showtime.room.cinema,
+    seats: showtime.seats.map(item => ({
+      id: item.id, seatId: item.seatId, rowLabel: item.seat.rowLabel, seatNumber: item.seat.seatNumber,
+      type: item.seat.type, price: item.price.toString(), status: item.status,
+    })).sort((a, b) => a.rowLabel.localeCompare(b.rowLabel) || a.seatNumber - b.seatNumber),
+  };
+}

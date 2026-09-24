@@ -1,0 +1,145 @@
+import Constants from "expo-constants";
+import * as SecureStore from "expo-secure-store";
+import type { AuthSession, BookingDetails, Cinema, Movie, PaginatedResponse, Room, SeatHold, SeatMap, Showtime } from "../types/api";
+
+const SESSION_KEY = "cinebook.auth.session";
+
+type StoredSession = AuthSession & { accessExpiresAt: number };
+
+export class ApiError extends Error {
+  constructor(public status: number, message: string) { super(message); }
+}
+
+function getApiBaseUrl(): string {
+  const configuredUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
+  if (configuredUrl) return configuredUrl;
+  const metroHost = Constants.expoConfig?.hostUri?.split(":")[0];
+  if (metroHost) return `http://${metroHost}:3000/api/v1`;
+  return "http://127.0.0.1:3000/api/v1";
+}
+
+async function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const response = await fetch(`${getApiBaseUrl()}${path}`, { signal });
+  if (!response.ok) throw new Error(`API phản hồi mã ${response.status}.`);
+  return response.json() as Promise<T>;
+}
+
+async function apiJson<T>(path: string, init: RequestInit): Promise<T> {
+  const response = await fetch(`${getApiBaseUrl()}${path}`, { ...init, headers: { "Content-Type": "application/json", ...init.headers } });
+  const payload = await response.json().catch(() => null) as { error?: { message?: string } } | null;
+  if (!response.ok) throw new ApiError(response.status, payload?.error?.message ?? `API phản hồi mã ${response.status}.`);
+  return payload as T;
+}
+
+async function saveSession(session: AuthSession) {
+  const stored: StoredSession = { ...session, accessExpiresAt: Date.now() + session.expiresIn * 1000 };
+  await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(stored));
+}
+
+async function readSession(): Promise<StoredSession | null> {
+  const raw = await SecureStore.getItemAsync(SESSION_KEY);
+  if (!raw) return null;
+  try { return JSON.parse(raw) as StoredSession; } catch { await SecureStore.deleteItemAsync(SESSION_KEY); return null; }
+}
+
+export async function hasSession() { return (await readSession()) !== null; }
+
+export async function login(email: string, password: string) {
+  const response = await apiJson<{ data: AuthSession }>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+  await saveSession(response.data);
+  return response.data;
+}
+
+export async function registerAndLogin(fullName: string, email: string, password: string) {
+  await apiJson("/auth/register", { method: "POST", body: JSON.stringify({ fullName, email, password }) });
+  return login(email, password);
+}
+
+async function accessToken(): Promise<string | null> {
+  const current = await readSession();
+  if (!current) return null;
+  if (current.accessExpiresAt > Date.now() + 30_000) return current.accessToken;
+  try {
+    const response = await apiJson<{ data: AuthSession }>("/auth/refresh", { method: "POST", body: JSON.stringify({ refreshToken: current.refreshToken }) });
+    await saveSession(response.data);
+    return response.data.accessToken;
+  } catch { await SecureStore.deleteItemAsync(SESSION_KEY); return null; }
+}
+
+async function authenticatedJson<T>(path: string, init: RequestInit = {}) {
+  const token = await accessToken();
+  if (!token) throw new ApiError(401, "Bạn cần đăng nhập để tiếp tục.");
+  return apiJson<T>(path, { ...init, headers: { Authorization: `Bearer ${token}`, ...init.headers } });
+}
+
+export async function holdSeats(showtimeId: number, showtimeSeatIds: number[]) {
+  const response = await authenticatedJson<{ data: SeatHold }>(`/showtimes/${showtimeId}/hold-seats`, { method: "POST", body: JSON.stringify({ showtimeSeatIds }) });
+  return response.data;
+}
+
+export async function getBooking(bookingId: number) {
+  const response = await authenticatedJson<{ data: BookingDetails }>(`/bookings/${bookingId}`);
+  return response.data;
+}
+
+export async function submitBooking(bookingId: number) {
+  const response = await authenticatedJson<{ data: BookingDetails }>(`/bookings/${bookingId}/submit`, { method: "POST", body: "{}" });
+  return response.data;
+}
+
+export async function releaseHold(bookingId: number) {
+  const token = await accessToken();
+  if (!token) throw new ApiError(401, "Phiên đăng nhập đã hết hạn.");
+  const response = await fetch(`${getApiBaseUrl()}/bookings/${bookingId}/hold`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+  if (!response.ok) { const payload = await response.json().catch(() => null) as { error?: { message?: string } } | null; throw new ApiError(response.status, payload?.error?.message ?? `API phản hồi mã ${response.status}.`); }
+}
+
+export async function getHomeData(signal?: AbortSignal) {
+  const [movies, showtimes, cinemas] = await Promise.all([
+    apiGet<PaginatedResponse<Movie>>("/movies?page=1&limit=6&active=true", signal),
+    apiGet<PaginatedResponse<Showtime>>("/showtimes?page=1&limit=100&status=SCHEDULED", signal),
+    apiGet<PaginatedResponse<unknown>>("/cinemas?page=1&limit=1&active=true", signal),
+  ]);
+  return { movies: movies.data, movieTotal: movies.meta.total, showtimes: showtimes.data, showtimeTotal: showtimes.meta.total, cinemaTotal: cinemas.meta.total };
+}
+
+export async function getMoviesData(signal?: AbortSignal) {
+  const [movies, showtimes] = await Promise.all([
+    apiGet<PaginatedResponse<Movie>>("/movies?page=1&limit=100&active=true", signal),
+    apiGet<PaginatedResponse<Showtime>>("/showtimes?page=1&limit=100&status=SCHEDULED", signal),
+  ]);
+  return { movies: movies.data, showtimes: showtimes.data };
+}
+
+export async function getMovieDetails(movieId: number, signal?: AbortSignal) {
+  const [movie, showtimes] = await Promise.all([
+    apiGet<{ data: Movie }>(`/movies/${movieId}`, signal),
+    apiGet<PaginatedResponse<Showtime>>(`/showtimes?movieId=${movieId}&status=SCHEDULED&page=1&limit=100`, signal),
+  ]);
+  return { movie: movie.data, showtimes: showtimes.data };
+}
+
+export async function getCinemaOptions(movieId: number, signal?: AbortSignal) {
+  const [showtimes, rooms, cinemas] = await Promise.all([
+    apiGet<PaginatedResponse<Showtime>>(`/showtimes?movieId=${movieId}&status=SCHEDULED&page=1&limit=100`, signal),
+    apiGet<PaginatedResponse<Room>>("/rooms?page=1&limit=100&active=true", signal),
+    apiGet<PaginatedResponse<Cinema>>("/cinemas?page=1&limit=100&active=true", signal),
+  ]);
+  return { showtimes: showtimes.data, rooms: rooms.data, cinemas: cinemas.data };
+}
+
+export async function getShowtimeSelectionData(movieId: number, cinemaId: number, signal?: AbortSignal) {
+  const [movie, cinema, showtimes, rooms] = await Promise.all([
+    apiGet<{ data: Movie }>(`/movies/${movieId}`, signal),
+    apiGet<{ data: Cinema }>(`/cinemas/${cinemaId}`, signal),
+    apiGet<PaginatedResponse<Showtime>>(`/showtimes?movieId=${movieId}&status=SCHEDULED&page=1&limit=100`, signal),
+    apiGet<PaginatedResponse<Room>>(`/rooms?cinemaId=${cinemaId}&active=true&page=1&limit=100`, signal),
+  ]);
+  const roomIds = new Set(rooms.data.map(room => room.id));
+  return { movie: movie.data, cinema: cinema.data, rooms: rooms.data, showtimes: showtimes.data.filter(item => roomIds.has(item.roomId)) };
+}
+
+export async function getSeatMap(showtimeId: number, signal?: AbortSignal) {
+  const response = await apiGet<{ data: SeatMap }>(`/showtimes/${showtimeId}/seats`, signal);
+  return response.data;
+}

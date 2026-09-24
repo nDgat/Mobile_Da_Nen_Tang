@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { changeShowtimeStatus, createShowtime, getShowtime, listShowtimes, parseShowtimeId, ShowtimeConflictError, ShowtimeNotFoundError, ShowtimeValidationError } from "./showtime.service.js";
+import { changeShowtimeStatus, createShowtime, getShowtime, getShowtimeSeatMap, listShowtimes, parseShowtimeId, ShowtimeConflictError, ShowtimeNotFoundError, ShowtimeValidationError } from "./showtime.service.js";
 
 function known(error: unknown, response: Response) { if (error instanceof ShowtimeValidationError) { response.status(400).json({ error: { code: "VALIDATION_ERROR", message: error.message } }); return true; } if (error instanceof ShowtimeNotFoundError) { response.status(404).json({ error: { code: "SHOWTIME_NOT_FOUND", message: error.message } }); return true; } if (error instanceof ShowtimeConflictError) { response.status(409).json({ error: { code: "SHOWTIME_CONFLICT", message: error.message } }); return true; } return false; }
 async function run(response: Response, next: NextFunction, action: () => Promise<void>) { try { await action(); } catch (error) { if (!known(error, response)) next(error); } }
@@ -7,4 +7,4 @@ export const listShowtimeHandler = (req: Request, res: Response, next: NextFunct
 export const getShowtimeHandler = (req: Request, res: Response, next: NextFunction) => run(res, next, async () => { res.json({ data: await getShowtime(parseShowtimeId(String(req.params.id))) }); });
 export const createShowtimeHandler = (req: Request, res: Response, next: NextFunction) => run(res, next, async () => { const result = await createShowtime(req.body); res.location(`/api/v1/showtimes/${result.data.id}`).status(201).json(result); });
 export const statusShowtimeHandler = (req: Request, res: Response, next: NextFunction) => run(res, next, async () => { res.json({ data: await changeShowtimeStatus(parseShowtimeId(String(req.params.id)), req.body) }); });
-
+export const seatMapShowtimeHandler = (req: Request, res: Response, next: NextFunction) => run(res, next, async () => { res.json({ data: await getShowtimeSeatMap(parseShowtimeId(String(req.params.id))) }); });
