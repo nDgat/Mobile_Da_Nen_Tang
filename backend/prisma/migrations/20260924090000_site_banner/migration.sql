@@ -1,0 +1,6 @@
+CREATE TABLE `SiteBanner` (
+  `id` INTEGER NOT NULL DEFAULT 1,
+  `imageUrl` VARCHAR(2048) NOT NULL,
+  `title` VARCHAR(150) NOT NULL,
+  PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

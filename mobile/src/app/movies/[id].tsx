@@ -1,7 +1,7 @@
 import { Link, type Href, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { addFavorite, deleteMovieReview, getFavoriteStatus, getMovieDetails, getMyMovieReview, removeFavorite, saveMovieReview } from "../../services/api";
+import { imageUri, addFavorite, deleteMovieReview, getFavoriteStatus, getMovieDetails, getMyMovieReview, removeFavorite, saveMovieReview } from "../../services/api";
 import type { Movie, MovieReview, ReviewPage, Showtime } from "../../types/api";
 
 function formatDate(value: string) { return new Date(`${value}T00:00:00`).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }); }
@@ -44,7 +44,7 @@ export default function MovieDetailScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF526F" />}>
-      {movie.posterUrl ? <Image source={{ uri: movie.posterUrl }} style={styles.poster} /> : <View style={[styles.poster, styles.placeholder]}><Text style={styles.posterIcon}>🎬</Text><Text style={styles.posterInitial}>{movie.title.slice(0, 1)}</Text></View>}
+      {movie.posterUrl ? <Image source={{ uri: imageUri(movie.posterUrl) }} style={styles.poster} /> : <View style={[styles.poster, styles.placeholder]}><Text style={styles.posterIcon}>🎬</Text><Text style={styles.posterInitial}>{movie.title.slice(0, 1)}</Text></View>}
       <View style={styles.main}>
         <Text style={styles.label}>CINEBOOK FEATURE</Text>
         <View style={styles.titleRow}><Text style={styles.title}>{movie.title}</Text><Pressable disabled={savingFavorite} onPress={() => void toggleFavorite()} style={[styles.favoriteButton, favorite && styles.favoriteButtonActive]}><Text style={[styles.favoriteIcon, favorite && styles.favoriteIconActive]}>{favorite ? "♥" : "♡"}</Text></Pressable></View>

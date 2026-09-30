@@ -1,8 +1,13 @@
 import Constants from "expo-constants";
-import * as SecureStore from "expo-secure-store";
 import type { AuthSession, BookingDetails, BookingHistoryItem, BookingStatus, Cinema, ConcessionProduct, FavoriteItem, MockPaymentResponse, Movie, MovieReview, NotificationPage, PaginatedResponse, ReviewPage, Room, SeatHold, SeatMap, Showtime, Ticket, Voucher } from "../types/api";
+import { deleteStoredItem, getStoredItem, setStoredItem } from "./secure-storage";
 
 const SESSION_KEY = "cinebook.auth.session";
+export function imageUri(value: string) { return value.startsWith("/uploads/") ? `${getApiBaseUrl().replace(/\/api\/v1$/, "")}${value}` : value; }
+export async function uploadImage(base64: string) { return (await authenticatedJson<{ data: { url: string } }>("/uploads", { method: "POST", body: JSON.stringify({ base64 }) })).data.url; }
+export type SiteBanner = { id: number; imageUrl: string; title: string };
+export async function getSiteBanner(signal?: AbortSignal) { return (await apiGet<{ data: SiteBanner }>("/banner", signal)).data; }
+export async function saveSiteBanner(data: Pick<SiteBanner, "imageUrl" | "title">) { return authenticatedJson("/banner", { method: "PUT", body: JSON.stringify(data) }); }
 
 type StoredSession = AuthSession & { accessExpiresAt: number };
 
@@ -33,16 +38,25 @@ async function apiJson<T>(path: string, init: RequestInit): Promise<T> {
 
 async function saveSession(session: AuthSession) {
   const stored: StoredSession = { ...session, accessExpiresAt: Date.now() + session.expiresIn * 1000 };
-  await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(stored));
+  await setStoredItem(SESSION_KEY, JSON.stringify(stored));
 }
 
 async function readSession(): Promise<StoredSession | null> {
-  const raw = await SecureStore.getItemAsync(SESSION_KEY);
+  const raw = await getStoredItem(SESSION_KEY);
   if (!raw) return null;
-  try { return JSON.parse(raw) as StoredSession; } catch { await SecureStore.deleteItemAsync(SESSION_KEY); return null; }
+  try { return JSON.parse(raw) as StoredSession; } catch { await deleteStoredItem(SESSION_KEY); return null; }
 }
 
 export async function hasSession() { return (await readSession()) !== null; }
+
+export async function logout() {
+  const current = await readSession();
+  try {
+    if (current) await apiJson("/auth/logout", { method: "POST", body: JSON.stringify({ refreshToken: current.refreshToken }) });
+  } finally {
+    await deleteStoredItem(SESSION_KEY);
+  }
+}
 
 export async function login(email: string, password: string) {
   const response = await apiJson<{ data: AuthSession }>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
@@ -63,13 +77,17 @@ async function accessToken(): Promise<string | null> {
     const response = await apiJson<{ data: AuthSession }>("/auth/refresh", { method: "POST", body: JSON.stringify({ refreshToken: current.refreshToken }) });
     await saveSession(response.data);
     return response.data.accessToken;
-  } catch { await SecureStore.deleteItemAsync(SESSION_KEY); return null; }
+  } catch { await deleteStoredItem(SESSION_KEY); return null; }
 }
 
-async function authenticatedJson<T>(path: string, init: RequestInit = {}) {
+export async function authenticatedJson<T>(path: string, init: RequestInit = {}) {
   const token = await accessToken();
   if (!token) throw new ApiError(401, "Bạn cần đăng nhập để tiếp tục.");
   return apiJson<T>(path, { ...init, headers: { Authorization: `Bearer ${token}`, ...init.headers } });
+}
+
+export async function getCurrentUser() {
+  return (await authenticatedJson<{ data: AuthSession["user"] }>("/auth/me")).data;
 }
 
 export async function holdSeats(showtimeId: number, showtimeSeatIds: number[]) {
@@ -137,14 +155,14 @@ export async function payBookingMock(bookingId: number, outcome: "SUCCESS" | "FA
 
 export async function getTicket(bookingId: number) {
   const response = await authenticatedJson<{ data: Ticket }>(`/bookings/${bookingId}/ticket`);
-  await SecureStore.setItemAsync(`cinebook.ticket.${bookingId}`, JSON.stringify(response.data));
+  await setStoredItem(`cinebook.ticket.${bookingId}`, JSON.stringify(response.data));
   return response.data;
 }
 
 export async function getCachedTicket(bookingId: number) {
-  const raw = await SecureStore.getItemAsync(`cinebook.ticket.${bookingId}`);
+  const raw = await getStoredItem(`cinebook.ticket.${bookingId}`);
   if (!raw) return null;
-  try { return JSON.parse(raw) as Ticket; } catch { await SecureStore.deleteItemAsync(`cinebook.ticket.${bookingId}`); return null; }
+  try { return JSON.parse(raw) as Ticket; } catch { await deleteStoredItem(`cinebook.ticket.${bookingId}`); return null; }
 }
 
 export async function releaseHold(bookingId: number) {
@@ -156,7 +174,7 @@ export async function releaseHold(bookingId: number) {
 
 export async function getHomeData(signal?: AbortSignal) {
   const [movies, showtimes, cinemas] = await Promise.all([
-    apiGet<PaginatedResponse<Movie>>("/movies?page=1&limit=6&active=true", signal),
+    apiGet<PaginatedResponse<Movie>>("/movies?page=1&limit=100&active=true", signal),
     apiGet<PaginatedResponse<Showtime>>("/showtimes?page=1&limit=100&status=SCHEDULED", signal),
     apiGet<PaginatedResponse<unknown>>("/cinemas?page=1&limit=1&active=true", signal),
   ]);

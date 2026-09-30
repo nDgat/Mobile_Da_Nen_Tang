@@ -1,6 +1,6 @@
 import * as Notifications from "expo-notifications";
-import * as SecureStore from "expo-secure-store";
 import type { Ticket } from "@/types/api";
+import { getStoredItem, setStoredItem } from "./secure-storage";
 
 export type ReminderResult = "SCHEDULED" | "DENIED" | "TOO_LATE";
 
@@ -11,12 +11,12 @@ export async function scheduleTicketReminder(ticket: Ticket): Promise<ReminderRe
   if (!permission.granted) permission = await Notifications.requestPermissionsAsync();
   if (!permission.granted) return "DENIED";
   const storageKey = `cinebook.reminder.${ticket.bookingId}`;
-  const previous = await SecureStore.getItemAsync(storageKey);
+  const previous = await getStoredItem(storageKey);
   if (previous) await Notifications.cancelScheduledNotificationAsync(previous).catch(() => undefined);
   const identifier = await Notifications.scheduleNotificationAsync({
     content: { title: "Sắp đến giờ chiếu", body: `${ticket.movie.title} bắt đầu sau 30 phút · ${ticket.cinema.name} · Ghế ${ticket.seats.join(", ")}`, data: { url: `/tickets/${ticket.bookingId}` } },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: reminderAt },
   });
-  await SecureStore.setItemAsync(storageKey, identifier);
+  await setStoredItem(storageKey, identifier);
   return "SCHEDULED";
 }

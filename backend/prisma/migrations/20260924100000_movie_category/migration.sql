@@ -1,0 +1,2 @@
+ALTER TABLE `Movie` ADD COLUMN `category` ENUM('NOW_SHOWING', 'SPECIAL', 'COMING_SOON') NOT NULL DEFAULT 'NOW_SHOWING';
+CREATE INDEX `Movie_category_idx` ON `Movie` (`category`);

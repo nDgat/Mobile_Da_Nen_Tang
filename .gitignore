@@ -18,3 +18,4 @@ backend/src/generated/prisma/
 .agents/
 .expo/
 coverage/
+backend/uploads/

@@ -28,12 +28,19 @@ const rooms = cinemas.flatMap((cinema, cinemaIndex) =>
     name: `Phòng mẫu ${roomIndex + 1}`,
   })),
 );
-const showtimes = [
-  { id: 120001, movieId: 120001, roomId: 120001, startsAt: new Date("2026-09-20T18:00:00+07:00"), endsAt: new Date("2026-09-20T19:50:00+07:00") },
-  { id: 120002, movieId: 120002, roomId: 120001, startsAt: new Date("2026-09-20T20:30:00+07:00"), endsAt: new Date("2026-09-20T22:10:00+07:00") },
-  { id: 120003, movieId: 120002, roomId: 120002, startsAt: new Date("2026-09-20T18:00:00+07:00"), endsAt: new Date("2026-09-20T19:40:00+07:00") },
-  { id: 120004, movieId: 120001, roomId: 120002, startsAt: new Date("2026-09-20T20:30:00+07:00"), endsAt: new Date("2026-09-20T22:20:00+07:00") },
-];
+function bangkokDateAfter(days: number): string {
+  const parts = new Intl.DateTimeFormat("en", { timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(Date.now() + days * 86_400_000));
+  const value = (type: Intl.DateTimeFormatPartTypes) => parts.find(part => part.type === type)?.value ?? "";
+  return `${value("year")}-${value("month")}-${value("day")}`;
+}
+
+const sampleDate = bangkokDateAfter(1);
+const showtimeIdBase = Number(sampleDate.replaceAll("-", "")) * 100;
+const atSampleTime = (time: string) => new Date(`${sampleDate}T${time}:00+07:00`);
+const showtimes = rooms.flatMap((room, index) => [
+  { id: showtimeIdBase + index * 2 + 1, movieId: 120001, roomId: room.id, startsAt: atSampleTime("18:00"), endsAt: atSampleTime("19:50") },
+  { id: showtimeIdBase + index * 2 + 2, movieId: 120002, roomId: room.id, startsAt: atSampleTime("20:30"), endsAt: atSampleTime("22:10") },
+]);
 const concessions = [
   { id: 120001, name: "Bắp rang bơ cỡ vừa", description: "Bắp rang bơ truyền thống", category: "POPCORN" as const, price: "45000", sortOrder: 1 },
   { id: 120002, name: "Bắp caramel cỡ lớn", description: "Bắp phủ caramel cỡ lớn", category: "POPCORN" as const, price: "65000", sortOrder: 2 },
@@ -46,14 +53,6 @@ const vouchers = [
   { id: 120002, code: "GIAM20K", name: "Giảm 20.000đ", description: "Áp dụng cho đơn từ 150.000đ", discountType: "FIXED" as const, discountValue: "20000", minOrderAmount: "150000", maxDiscountAmount: null, startsAt: new Date("2026-01-01T00:00:00+07:00"), endsAt: new Date("2027-12-31T23:59:59+07:00"), usageLimit: 1000 },
   { id: 120003, code: "COMBO15", name: "Giảm 15%", description: "Đơn từ 250.000đ, giảm tối đa 60.000đ", discountType: "PERCENTAGE" as const, discountValue: "15", minOrderAmount: "250000", maxDiscountAmount: "60000", startsAt: new Date("2026-01-01T00:00:00+07:00"), endsAt: new Date("2027-12-31T23:59:59+07:00"), usageLimit: 500 },
 ];
-
-// Giữ nguyên bốn suất cũ; bổ sung hai suất cho mỗi phòng mới.
-for (const [index, room] of rooms.slice(2).entries()) {
-  showtimes.push(
-    { id: 120005 + index * 2, movieId: 120001, roomId: room.id, startsAt: new Date("2026-09-20T18:00:00+07:00"), endsAt: new Date("2026-09-20T19:50:00+07:00") },
-    { id: 120006 + index * 2, movieId: 120002, roomId: room.id, startsAt: new Date("2026-09-20T20:30:00+07:00"), endsAt: new Date("2026-09-20T22:10:00+07:00") },
-  );
-}
 
 export async function seedSampleData(tx: Prisma.TransactionClient): Promise<void> {
   await tx.voucher.createMany({ data: vouchers, skipDuplicates: true });
@@ -96,6 +95,7 @@ export async function seedSampleData(tx: Prisma.TransactionClient): Promise<void
     );
     await tx.seat.createMany({ data: seats, skipDuplicates: true });
   }
+  await tx.showtime.updateMany({ where: { startsAt: { lt: new Date() }, status: "SCHEDULED" }, data: { status: "FINISHED" } });
   await tx.showtime.createMany({ data: showtimes, skipDuplicates: true });
   for (const showtime of showtimes) {
     const stored = await tx.showtime.findUniqueOrThrow({ where: { id: showtime.id } });
@@ -139,7 +139,7 @@ async function main(): Promise<void> {
   ]);
   console.log("Seed CineBook v1: phim / rạp / phòng / ghế / suất / ghế theo suất / bắp nước / voucher");
   console.log(counts.join(" / "));
-  console.log("Ngày mẫu: 20/09/2026, giờ Việt Nam. Giữ nguyên bản ghi đã tồn tại.");
+  console.log(`Ngày mẫu: ${sampleDate}, giờ Việt Nam. Suất cũ được giữ làm lịch sử.`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

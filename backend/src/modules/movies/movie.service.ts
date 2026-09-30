@@ -1,4 +1,4 @@
-import type { Movie } from "../../generated/prisma/client.js";
+import type { Movie, MovieCategory } from "../../generated/prisma/client.js";
 import {
   findMovieById,
   findMoviePage,
@@ -25,6 +25,7 @@ export class MovieNotFoundError extends Error {
 }
 
 export interface MovieDto {
+  category: MovieCategory;
   id: number;
   title: string;
   synopsis: string | null;
@@ -38,6 +39,7 @@ export interface MovieDto {
 
 function toMovieDto(movie: Movie): MovieDto {
   return {
+    category: movie.category,
     id: movie.id,
     title: movie.title,
     synopsis: movie.synopsis,
@@ -143,6 +145,7 @@ function readCreateData(value: unknown): MovieWriteData {
   const body = requireObject(value);
 
   return {
+    category: body.category === undefined ? "NOW_SHOWING" : readCategory(body.category),
     title: readRequiredText(body.title, "title", 255),
     synopsis: readNullableText(body.synopsis, "synopsis"),
     durationMinutes: readPositiveInteger(
@@ -156,6 +159,11 @@ function readCreateData(value: unknown): MovieWriteData {
   };
 }
 
+export function readCategory(value: unknown): MovieCategory {
+  if (value !== "NOW_SHOWING" && value !== "SPECIAL" && value !== "COMING_SOON") throw new MovieValidationError("category phải là NOW_SHOWING, SPECIAL hoặc COMING_SOON.");
+  return value;
+}
+
 function readBoolean(value: unknown): boolean {
   if (typeof value !== "boolean") {
     throw new MovieValidationError("isActive phải là true hoặc false.");
@@ -167,6 +175,7 @@ function readBoolean(value: unknown): boolean {
 function readUpdateData(value: unknown): MovieUpdateData {
   const body = requireObject(value);
   const data: MovieUpdateData = {};
+  if (hasOwn(body, "category")) data.category = readCategory(body.category);
 
   if (hasOwn(body, "title")) {
     data.title = readRequiredText(body.title, "title", 255);
@@ -217,6 +226,7 @@ export async function listMovies(query: Record<string, unknown>) {
     (page - 1) * limit,
     limit,
     isActive,
+    query.category === undefined ? undefined : readCategory(query.category),
   );
 
   return {

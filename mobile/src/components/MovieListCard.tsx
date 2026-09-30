@@ -1,10 +1,13 @@
+import { imageUri } from "../services/api";
 import { Image, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
 import type { Movie } from "../types/api";
 
 export function MovieListCard({ movie, showtimeCount }: { movie: Movie; showtimeCount: number }) {
+  const [failed, setFailed] = useState(false);
   return (
     <View style={styles.card}>
-      {movie.posterUrl ? <Image source={{ uri: movie.posterUrl }} style={styles.poster} /> : (
+      {movie.posterUrl && !failed ? <Image source={{ uri: imageUri(movie.posterUrl) }} accessibilityLabel={movie.title} onError={() => setFailed(true)} style={styles.poster} /> : (
         <View style={[styles.poster, styles.placeholder]}><Text style={styles.icon}>🎞️</Text><Text style={styles.initial}>{movie.title.slice(0, 1)}</Text></View>
       )}
       <View style={styles.body}>
@@ -26,7 +29,7 @@ const styles = StyleSheet.create({
   poster: { width: 112, minHeight: 162 }, placeholder: { alignItems: "center", justifyContent: "center", backgroundColor: "#3D1730" },
   icon: { fontSize: 28 }, initial: { marginTop: 5, color: "#FFB3C2", fontSize: 23, fontWeight: "900" },
   body: { flex: 1, padding: 14 }, title: { color: "#FFFFFF", fontSize: 17, fontWeight: "800", lineHeight: 22 },
-  synopsis: { marginTop: 7, color: "#9296A7", fontSize: 12, lineHeight: 18 }, footer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: 10 },
+  synopsis: { marginTop: 7, color: "#ACB0C0", fontSize: 13, lineHeight: 19 }, footer: { flexDirection: "row", flexWrap: "wrap", gap: 8, alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: 10 },
   duration: { color: "#C3C6D1", fontSize: 12, fontWeight: "600" }, badge: { paddingHorizontal: 9, paddingVertical: 5, borderRadius: 20, backgroundColor: "#4A1D31" },
   badgeMuted: { backgroundColor: "#272A36" }, badgeText: { color: "#FF9AAF", fontSize: 10, fontWeight: "800" }, badgeTextMuted: { color: "#9A9EAD" },
 });

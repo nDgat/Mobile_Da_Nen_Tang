@@ -63,6 +63,10 @@ function readLogLevel(value: string | undefined): "debug" | "info" | "warn" | "e
   return level;
 }
 
+function readOrigins(value: string | undefined): string[] {
+  return (value ?? "").split(",").map(origin => origin.trim().replace(/\/$/, "")).filter(Boolean);
+}
+
 export const env = {
   database: {
     host: process.env.MYSQL_HOST ?? "127.0.0.1",
@@ -80,6 +84,7 @@ export const env = {
     refreshTtlSeconds: readPositiveInteger(process.env.JWT_REFRESH_TTL_SECONDS, 2_592_000),
   },
   nodeEnv: process.env.NODE_ENV ?? "development",
+  corsOrigins: readOrigins(process.env.CORS_ORIGINS),
   logLevel: readLogLevel(process.env.LOG_LEVEL),
   port: readPort(process.env.PORT, DEFAULT_PORT),
 };

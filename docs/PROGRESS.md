@@ -4,9 +4,9 @@ Cập nhật lần cuối: 2026-09-24
 
 ## Tổng quan
 
-- Hoàn thành: **44/54 phần (81,5%)**
-- Đang thực hiện: chưa bắt đầu phần mới.
-- Bước tiếp theo: **PHẦN 45 – Audit Log**.
+- Hoàn thành: **49/51 phần (96,1%)**
+- Đang thực hiện: **PHẦN 49 – Android** và **PHẦN 50 – iOS**.
+- Bước tiếp theo: xác nhận luồng giao diện trên thiết bị Android và iPhone.
 
 Quy ước:
 
@@ -60,24 +60,21 @@ Quy ước:
 - [x] PHẦN 42 – Validation
 - [x] PHẦN 43 – Error Handling
 - [x] PHẦN 44 – Logging
-- [ ] PHẦN 45 – Audit Log
-- [ ] PHẦN 46 – Swagger
-- [ ] PHẦN 47 – Unit Test
-- [ ] PHẦN 48 – Integration Test
-- [ ] PHẦN 49 – Dockerize Backend
-- [ ] PHẦN 50 – Docker Compose hoàn chỉnh
-- [ ] PHẦN 51 – Kết nối Expo Go với Docker
-- [ ] PHẦN 52 – Kiểm thử Android
-- [ ] PHẦN 53 – Kiểm thử iOS
-- [ ] PHẦN 54 – Tối ưu và hoàn thiện
+- [x] PHẦN 45 – Audit Log
+- [x] PHẦN 46 – Swagger
+- [x] PHẦN 47 – Unit Test
+- [x] PHẦN 48 – Integration Test
+- [-] PHẦN 49 – Kiểm thử Android
+- [-] PHẦN 50 – Kiểm thử iOS
+- [x] PHẦN 51 – Tối ưu và hoàn thiện
 
 ## Kết quả đã xác minh
 
 ### Seed dữ liệu
 
 - Người học đã chạy `npm run db:seed` thành công.
-- 8 phim, 3 rạp, mỗi rạp 5 phòng: tổng 15 phòng, 600 ghế, 30 suất, 1200 ghế theo suất, 5 sản phẩm bắp nước và 3 voucher.
-- Lịch mẫu ngày 20/09/2026 thuộc 2 phim demo; 6 phim thật bổ sung chưa có suất.
+- 8 phim, 3 rạp, mỗi rạp 5 phòng: tổng 15 phòng, 600 ghế, 30 suất mới, 1200 ghế theo suất, 5 sản phẩm bắp nước và 3 voucher.
+- Seed tự tạo lịch cho ngày kế tiếp theo giờ Việt Nam; suất đã qua được chuyển `FINISHED` và giữ làm lịch sử.
 
 ### Môi trường
 
@@ -107,8 +104,69 @@ Quy ước:
 - `GET /health/database` xác nhận database `cinebook` hoạt động
 - Prisma ORM 7.10 kết nối thành công với MySQL qua driver adapter
 - `GET /health/prisma` trả status `ok`
+- Backend hỗ trợ CORS cho Expo Web; preflight `OPTIONS` và request khác cổng đã kiểm thử thành công.
 - Đã chuẩn bị API học tập tại `/api/v1/examples` theo Route → Controller → Service
 - Agent đã xác minh HTTP `200`, `201`, `400`, `404`; chờ người học tự chạy và xác nhận
+
+## PHẦN 51 đã hoàn thành
+
+- Chuẩn hóa tên CineBook, scheme, Android package và iOS bundle identifier.
+- Thêm ESLint, lệnh typecheck/lint/doctor/check và sửa toàn bộ lỗi cấu hình, route được phát hiện.
+- Tách notification native/web, loại cảnh báo web và giảm bundle web từ 1,36 MB xuống 1,23 MB.
+- Session/vé dùng SecureStore trên mobile và localStorage trên web, khắc phục crash ExpoSecureStore.
+- Backend đạt 8 unit test, 5 integration test, typecheck/build, Prisma validate và không drift.
+- Mobile đạt TypeScript, ESLint, Expo Doctor 18/18 và web export 14 route.
+- Backend audit không có lỗ hổng; Expo SDK 54 còn cảnh báo dependency chỉ sửa bằng nâng SDK phá vỡ tương thích hiện tại.
+- Phần 49/50 vẫn chờ xác nhận runtime trên thiết bị Android và iPhone.
+
+## PHẦN 50 đang thực hiện
+
+- TypeScript mobile kiểm tra thành công.
+- Metro tạo thành công iOS Hermes bundle từ 1.434 module, dung lượng 3,76 MB.
+- Metro LAN và backend đều phản hồi `200` qua địa chỉ `172.20.10.3`.
+- Expo Go có thể mở project tại `exp://172.20.10.3:8081` trên cùng Wi-Fi.
+- Windows không thể tạo native iOS build; còn cần xác nhận luồng mới nhất trực tiếp trên iPhone.
+
+## PHẦN 49 đang thực hiện
+
+- TypeScript mobile kiểm tra thành công và Expo Doctor đạt 18/18.
+- Metro tạo thành công Android Hermes bundle từ 1.432 module, dung lượng 3,76 MB.
+- Android SDK, platform-tools, emulator và system image API 37 đã tồn tại trên máy.
+- Chưa có thiết bị trong `adb devices`, chưa có AVD và Android Studio/avdmanager.
+- Còn cần kiểm thử giao diện, điều hướng, đăng nhập và đặt vé trên Android thực tế.
+
+## PHẦN 48 đã hoàn thành
+
+- Dùng Supertest chạy request trực tiếp qua Express và MySQL local.
+- Kiểm thử health, OpenAPI, CORS, đăng ký/đăng nhập, refresh rotation và logout.
+- Xác minh CUSTOMER bị chặn, ADMIN truy cập được và lỗi validation có request ID.
+- Kiểm thử giữ ghế, quyền sở hữu booking, hủy giữ và hoàn trả ghế.
+- Kết quả 5/5 test đạt; dữ liệu người dùng, booking và ghế thử được dọn sạch.
+- Backend typecheck/build thành công; npm audit không có lỗ hổng.
+
+## PHẦN 47 đã hoàn thành
+
+- Dùng test runner tích hợp của Node.js và `tsx`, không thêm test framework nặng.
+- Kiểm thử tính tiền ghế/phí/bắp nước/giảm giá, voucher và chữ ký QR vé.
+- Bao phủ trường hợp hợp lệ, giới hạn, dữ liệu âm, voucher hết hạn/hết lượt và token bị sửa.
+- Kết quả 8/8 test đạt; tổng line coverage 88,65%, function coverage 100%.
+- Backend typecheck và build tiếp tục thành công.
+
+## PHẦN 46 đã hoàn thành
+
+- Swagger UI hoạt động tại `/api-docs`; tài liệu JSON tại `/api-docs.json`.
+- OpenAPI 3.0.3 mô tả 61 thao tác trên 43 đường dẫn thuộc các nhóm API chính.
+- Có request body, path/query parameter, response lỗi và phân nhóm endpoint.
+- Hỗ trợ Bearer JWT để thử trực tiếp API yêu cầu đăng nhập hoặc quyền ADMIN.
+- Backend typecheck/build, JSON OpenAPI và giao diện Swagger đều kiểm thử thành công.
+
+## PHẦN 45 đã hoàn thành
+
+- Thêm bảng AuditLog bất biến, liên kết quản trị viên thực hiện thao tác.
+- Ghi action, loại và ID đối tượng, dữ liệu trước/sau, request ID, IP, user agent và thời điểm.
+- Thay đổi trạng thái người dùng và hiển thị review được ghi audit trong cùng transaction MySQL.
+- API `GET /api/v1/admin/audit-logs` chỉ dành cho ADMIN, hỗ trợ phân trang và lọc.
+- Migration đã áp dụng; database không drift, typecheck/build và kiểm thử tích hợp thành công.
 
 ## PHẦN 44 đã hoàn thành
 
@@ -309,6 +367,7 @@ Quy ước:
 - Login trả access token và refresh token ngẫu nhiên có hạn 30 ngày.
 - `POST /api/v1/auth/refresh` xoay vòng token; token cũ bị vô hiệu ngay.
 - `POST /api/v1/auth/logout` thu hồi refresh token.
+- Mobile hiển thị đăng nhập/đăng xuất theo phiên, xác nhận thao tác và xóa phiên SecureStore.
 - Chỉ hash SHA-256 được lưu trong MySQL; migration và schema đã đồng bộ.
 - Kiểm thử refresh/logout/reuse đạt `200`, `204`, `401`; dữ liệu thử đã dọn sạch.
 
@@ -491,7 +550,7 @@ Kết quả:
 - Database `cinebook` dùng `utf8mb4` và `utf8mb4_unicode_ci`.
 - Tài khoản `cinebook_user@localhost` kết nối thành công qua `127.0.0.1:3306`.
 - Tài khoản ứng dụng đã được kiểm tra quyền tạo và xóa bảng trong `cinebook`.
-- Các file cấu hình Docker trong repository được giữ lại như tài liệu của phần đã thực hành; chúng không chiếm đáng kể dung lượng và không tự chạy.
+- Cấu hình Docker đã được xóa khỏi repository theo lựa chọn tiếp tục với MySQL cài trực tiếp.
 
 Trạng thái: **Hoàn thành**.
 
@@ -507,3 +566,66 @@ Trạng thái: **Hoàn thành**.
 - Hiểu vai trò cơ bản của image, container, volume, network, port, Dockerfile, Docker Compose và biến môi trường.
 
 Trạng thái: **Hoàn thành**.
+
+## Bổ sung – Tối ưu giao diện
+
+- Trang chủ có banner responsive, lối tắt lịch chiếu/vé/yêu thích và khung nội dung tối đa 1.180px.
+- Danh sách phim chuyển sang hai cột từ 900px; cải thiện tìm kiếm, bộ lọc và độ tương phản.
+- Poster có fallback khi tải lỗi; đăng nhập có nhãn, hiện/ẩn mật khẩu, tránh bàn phím che form.
+- TypeScript, ESLint và export web 14 route đạt. Chưa xác minh trực quan do công cụ trình duyệt lỗi khởi tạo.
+
+## Bổ sung – Giao diện quản trị (2026-09-24)
+
+- [x] Route `/admin`, kiểm tra tài khoản ADMIN qua API; lối vào từ trang chủ cho quản trị viên.
+- [x] Dashboard: người dùng, phim/rạp hoạt động, đặt vé, doanh thu và đơn gần đây.
+- [x] Thêm/sửa/kích hoạt/ngừng hoạt động phim, rạp, phòng và ghế.
+- [x] Tạo suất chiếu, chọn phim/phòng, giá thường/VIP, giờ Việt Nam; đổi trạng thái có xác nhận.
+- [x] Xem/khóa/mở người dùng, xem đặt vé, ẩn/hiện đánh giá và xem audit log; danh sách phân trang.
+- [x] Bố cục sidebar desktop/menu ngang mobile, form có nhãn, trạng thái tải/lỗi/rỗng, chặn lưu trùng.
+- Kiểm tra: TypeScript, ESLint đạt; export web 15 route thành công; 11 API đọc dữ liệu với ADMIN trả thành công; kiểm tra form ngày/giờ/số nguyên đạt.
+- Chưa kiểm thử trực quan trên browser/thiết bị (công cụ browser lỗi khởi tạo), chưa kiểm thử thao tác ghi qua UI. Chưa commit/push.
+
+## Bổ sung – Carousel phim và ảnh bìa (2026-09-24)
+- [x] Trang chủ và danh sách phim dùng carousel cuộn ngang, snap giữa; poster giữa lớn/rõ, hai bên nhỏ/mờ và nghiêng nhẹ.
+- [x] Chỉ một khối thông tin của phim đang chọn, thời lượng/ngày khởi chiếu và nút Đặt vé; nút chuyển phim hỗ trợ web, giữ tìm kiếm/bộ lọc.
+- [x] Ảnh bìa dưới carousel, có bìa vector mặc định và Admin → Ảnh bìa để đổi URL/tiêu đề, xem trước và lưu chung trong MySQL.
+- [x] Migration SiteBanner đã áp dụng; API GET công khai, PUT chỉ ADMIN, kiểm tra URL http/https; bổ sung Swagger và test.
+- Kiểm tra: TypeScript backend/mobile, ESLint, export web 15 route đạt; test API ảnh bìa với mock repository đạt; API thật GET /banner trả 200.
+- Chưa kiểm thử cử chỉ và hình ảnh trên thiết bị/browser: công cụ browser lỗi khởi tạo. Chưa commit/push.
+
+## Tinh chỉnh góc poster carousel (2026-09-24)
+- Hai poster bên cạnh xoay vào tâm ±32°, khoảng cách tâm còn 88% chiều rộng poster để lộ góc ảnh.
+- Poster phụ giữ scale 84%, opacity 72%, blur nhẹ 0,35; poster giữa nằm trên lớp trước, rõ nét.
+- Giữ snap và thông tin phim đồng bộ theo bước cuộn mới. Chưa kiểm thử trực quan trên thiết bị.
+
+## Carousel cuộn vòng (2026-09-24)
+- [x] Phim cuối nối với phim đầu theo cả hai chiều, hỗ trợ vuốt và nút chuyển phim.
+- Dùng các bản sao và đưa vị trí về vùng giữa sau khi dừng; giữ snap, hiệu ứng và thông tin đúng phim gốc. Danh sách một phim không lặp.
+- TypeScript và ESLint đạt; chưa kiểm thử cử chỉ thực tế trên thiết bị. Chưa commit/push.
+
+## Ba nhóm phim và thêm 10 phim mẫu (2026-09-24)
+- [x] Thêm 10 phim hư cấu mẫu, không ghi đè phim cũ và không tạo suất chiếu tự động. Tổng 18 phim: 12 Đang chiếu, 3 Đặc biệt, 3 Sắp chiếu.
+- [x] Trang chủ và danh sách phim hiển thị ba tab ngang như mẫu; mỗi nhóm dùng carousel cuộn vòng, tìm kiếm giữ nguyên.
+- [x] MySQL lưu category; Admin thêm/sửa được Nhóm phim. API trả category và hỗ trợ lọc theo category; cập nhật Swagger.
+- TypeScript backend/mobile, ESLint đạt; API thực tế lọc đúng ba nhóm. Chưa kiểm thử trực quan trên thiết bị; chưa commit/push.
+
+## Bố cục thông tin phim và nhấn poster (2026-09-24)
+- Bỏ liên kết chữ Chi tiết phim; nhấn bất kỳ poster nào mở chi tiết đúng phim đó.
+- Theo mô tả bằng chữ của người dùng: nút Đặt vé bên trái, tên phim 16px/thông tin 12px căn phải; giữ xuống dòng cho tên dài.
+- TypeScript và ESLint đạt; chưa kiểm thử trực quan trên thiết bị. Chưa commit/push.
+
+## Thu gọn hàng thông tin phim (2026-09-24)
+- Tên phim/thông tin nằm một dòng bên trái, nút Đặt vé nhỏ bên phải; tên 12px, thông tin 11px, chữ nút 12px. Nội dung dài rút gọn bằng dấu …, nhãn trợ năng giữ đủ thông tin.
+- TypeScript/ESLint đạt; chưa kiểm thử trực quan; chưa commit/push.
+
+## Chỉnh thông tin phim theo ảnh tham chiếu (2026-09-24)
+- Tên phim in hoa/đậm bên trái, thời lượng và ngày chiếu nghiêng ở dòng dưới; nút Đặt Vé đỏ viền trắng bo tròn bên phải.
+- Bỏ hàng mũi tên/số thứ tự dưới poster; giữ vuốt vòng và nhấn poster mở chi tiết.
+- TypeScript/ESLint đạt sau khi chỉnh JSX. Chưa đối chiếu trực quan trên thiết bị, chưa commit/push.
+
+## Chọn ảnh cục bộ cho poster và ảnh bìa (2026-09-24)
+- [x] Admin có nút Chọn ảnh từ máy, xem trước và tải lên backend cho poster/ảnh bìa; vẫn hỗ trợ URL. Bấm Lưu để áp dụng.
+- [x] Upload chỉ ADMIN; kiểm tra nội dung JPG/PNG/WebP tối đa 5 MB và 40 MP, xoay/thu gọn tối đa 1920px, chuyển JPEG và đặt tên UUID.
+- [x] Lưu tại backend/uploads (không đưa vào Git); lưu đường dẫn tương đối và mở ảnh theo backend hiện tại để dùng chung web/điện thoại.
+- TypeScript backend/mobile, ESLint đạt; kiểm thử tải lên/đọc ảnh thật và phân quyền đạt, ảnh test được xóa; export web 15 route đạt.
+- Chưa kiểm thử hộp chọn ảnh thực tế trên iPhone/browser; chưa commit/push. Ảnh đã upload nhưng chưa lưu form vẫn nằm trên backend.

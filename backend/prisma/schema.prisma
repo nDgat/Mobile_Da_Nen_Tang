@@ -109,7 +109,14 @@ model RefreshToken {
   @@index([userId, expiresAt])
 }
 
+enum MovieCategory {
+  NOW_SHOWING
+  SPECIAL
+  COMING_SOON
+}
+
 model Movie {
+  category        MovieCategory   @default(NOW_SHOWING)
   id              Int             @id @default(autoincrement())
   title           String          @db.VarChar(255)
   synopsis        String?         @db.Text
@@ -124,6 +131,7 @@ model Movie {
   favorites       MovieFavorite[]
 
   @@index([releaseDate])
+  @@index([category])
 }
 
 model Cinema {
@@ -342,6 +350,12 @@ model BookingConcessionItem {
 }
 
 // Lịch sử dòng vé vẫn còn khi đơn hết hạn/hủy và ghế được bán cho đơn mới.
+model SiteBanner {
+  id       Int     @id @default(1)
+  imageUrl String  @db.VarChar(2048)
+  title    String  @db.VarChar(150)
+}
+
 model BookingSeat {
   id             Int          @id @default(autoincrement())
   bookingId      Int

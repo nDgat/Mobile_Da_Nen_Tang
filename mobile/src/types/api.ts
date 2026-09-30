@@ -1,4 +1,5 @@
 export interface Movie {
+  category: "NOW_SHOWING" | "SPECIAL" | "COMING_SOON";
   id: number;
   title: string;
   synopsis: string | null;
