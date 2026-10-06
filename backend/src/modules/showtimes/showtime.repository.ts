@@ -23,11 +23,11 @@ export const findRoomForShowtime = (id: number) => prisma.room.findUnique({ wher
 export const countActiveRoomSeats = (roomId: number) => prisma.seat.count({ where: { roomId, isActive: true } });
 export const findOverlappingShowtime = (roomId: number, startsAt: Date, endsAt: Date) => prisma.showtime.findFirst({ where: { roomId, status: { not: "CANCELLED" }, startsAt: { lt: endsAt }, endsAt: { gt: startsAt } } });
 
-export async function insertShowtimeWithSeats(data: { movieId: number; roomId: number; startsAt: Date; endsAt: Date }, standardPrice: bigint, vipPrice: bigint) {
+export async function insertShowtimeWithSeats(data: { movieId: number; roomId: number; startsAt: Date; endsAt: Date }, standardPrice: bigint, vipPrice: bigint, sweetboxPrice: bigint) {
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const showtime = await tx.showtime.create({ data });
     const seats = await tx.seat.findMany({ where: { roomId: data.roomId, isActive: true }, select: { id: true, type: true } });
-    await tx.showtimeSeat.createMany({ data: seats.map(seat => ({ showtimeId: showtime.id, seatId: seat.id, price: seat.type === "VIP" ? vipPrice.toString() : standardPrice.toString() })) });
+    await tx.showtimeSeat.createMany({ data: seats.map(seat => ({ showtimeId: showtime.id, seatId: seat.id, price: seat.type === "SWEETBOX" ? sweetboxPrice.toString() : seat.type === "VIP" ? vipPrice.toString() : standardPrice.toString() })) });
     return showtime;
   });
 }
@@ -39,6 +39,6 @@ export const findShowtimeSeatMap = (showtimeId: number) => prisma.showtime.findU
   include: {
     movie: { select: { id: true, title: true } },
     room: { select: { id: true, name: true, cinema: { select: { id: true, name: true } } } },
-    seats: { include: { seat: true }, orderBy: { seat: { rowLabel: "asc" } } },
+    seats: { where: { seat: { isActive: true } }, include: { seat: true }, orderBy: { seat: { rowLabel: "asc" } } },
   },
 });

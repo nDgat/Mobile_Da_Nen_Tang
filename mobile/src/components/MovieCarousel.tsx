@@ -1,12 +1,13 @@
 import { imageUri } from "../services/api";
-import { Link, type Href } from "expo-router";
-import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, Animated, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Link, type Href, useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AccessibilityInfo, Animated, AppState, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { Movie } from "../types/api";
 
-export function MovieCarousel({ movies }: { movies: Movie[] }) {
+export function MovieCarousel({ movies, backgroundUrl = "" }: { movies: Movie[]; backgroundUrl?: string }) {
   const [width, setWidth] = useState(0);
   return <View onLayout={event => setWidth(event.nativeEvent.layout.width)} style={s.container}>
+    {!!backgroundUrl && <View pointerEvents="none" style={StyleSheet.absoluteFill}><Image source={{ uri: imageUri(backgroundUrl) }} resizeMode="cover" style={StyleSheet.absoluteFill} /><View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.5)" }]} /></View>}
     {movies.length === 0 ? <Text style={s.empty}>Không tìm thấy phim phù hợp.</Text> : width > 0 && <Track key={`${Math.round(width)}:${movies.map(movie => movie.id).join(",")}`} width={width} movies={movies} />}
   </View>;
 }
@@ -28,6 +29,21 @@ function Track({ movies, width }: { movies: Movie[]; width: number }) {
   const [active, setActive] = useState(origin);
   const [reduced, setReduced] = useState(false);
   const selected = movies[active % movies.length];
+  const lastMotion = useRef(Date.now());
+  const activeIndex = useRef(active);
+  activeIndex.current = active;
+  const [focused, setFocused] = useState(false);
+  useFocusEffect(useCallback(() => { lastMotion.current = Date.now(); setFocused(true); return () => setFocused(false); }, []));
+  useEffect(() => {
+    if (!focused || !looping || reduced) return;
+    const interval = setInterval(() => {
+      if (AppState.currentState !== "active" || (Platform.OS === "web" && typeof document !== "undefined" && document.hidden)) { lastMotion.current = Date.now(); return; }
+      if (!initialized.current || dragging.current || Date.now() - lastMotion.current < 5000) return;
+      lastMotion.current = Date.now();
+      scroll.current?.scrollTo({ x: (activeIndex.current + 1) * step, animated: true });
+    }, 250);
+    return () => clearInterval(interval);
+  }, [focused, looping, reduced, step]);
   useEffect(() => {
     let mounted = true;
     void AccessibilityInfo.isReduceMotionEnabled().then(value => { if (mounted) setReduced(value); });
@@ -59,10 +75,11 @@ function Track({ movies, width }: { movies: Movie[]; width: number }) {
     <Animated.ScrollView ref={scroll} horizontal showsHorizontalScrollIndicator={false} bounces={false} decelerationRate="fast" snapToInterval={step} snapToAlignment="start" disableIntervalMomentum
       contentContainerStyle={{ paddingHorizontal: inset, paddingVertical: 22 }} scrollEventThrottle={16} contentOffset={initialOffset}
       onContentSizeChange={() => { if (!initialized.current) { initialized.current = true; scroll.current?.scrollTo({ x: origin * step, animated: false }); } }}
-      onScrollBeginDrag={() => { dragging.current = true; if (timer.current) clearTimeout(timer.current); }}
-      onScrollEndDrag={event => { dragging.current = false; scheduleSettle(event.nativeEvent.contentOffset.x); }}
+      onScrollBeginDrag={() => { dragging.current = true; lastMotion.current = Date.now(); if (timer.current) clearTimeout(timer.current); }}
+      onScrollEndDrag={event => { dragging.current = false; lastMotion.current = Date.now(); scheduleSettle(event.nativeEvent.contentOffset.x); }}
       onMomentumScrollEnd={event => settle(event.nativeEvent.contentOffset.x)}
       onScroll={Animated.event([{ nativeEvent: { contentOffset: { x } } }], { useNativeDriver: Platform.OS !== "web", listener: (event: { nativeEvent: { contentOffset: { x: number } } }) => {
+        lastMotion.current = Date.now();
         const offset = event.nativeEvent.contentOffset.x;
         const index = indexFor(offset);
         setActive(previous => previous === index ? previous : index);

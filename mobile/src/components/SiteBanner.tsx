@@ -7,6 +7,7 @@ import { getSiteBanner, saveSiteBanner, imageUri } from "../services/api";
 
 export function SiteBanner({ editable = false }: { editable?: boolean }) {
   const [url, setUrl] = useState("");
+  const [backgroundUrl, setBackgroundUrl] = useState("");
   const [title, setTitle] = useState("Một bộ phim hay, một buổi tối đáng nhớ.");
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
@@ -20,7 +21,7 @@ export function SiteBanner({ editable = false }: { editable?: boolean }) {
     if (retry === 0) return;
     const controller = new AbortController();
     setReady(false);
-    void getSiteBanner(controller.signal).then(data => { setUrl(data.imageUrl); setTitle(data.title); setFailed(false); setReady(true); setStatus(""); }).catch(error => { if (!controller.signal.aborted) setStatus(error instanceof Error ? error.message : "Không tải được ảnh bìa."); });
+    void getSiteBanner(controller.signal).then(data => { setUrl(data.imageUrl); setBackgroundUrl(data.backgroundUrl ?? ""); setTitle(data.title); setFailed(false); setReady(true); setStatus(""); }).catch(error => { if (!controller.signal.aborted) setStatus(error instanceof Error ? error.message : "Không tải được ảnh bìa."); });
     return () => controller.abort();
   }, [retry]);
   async function save() {
@@ -29,12 +30,13 @@ export function SiteBanner({ editable = false }: { editable?: boolean }) {
     try { if (url && !/^\/uploads\/[a-f0-9-]{36}\.jpg$/.test(url) && !["https:", "http:"].includes(new URL(url).protocol)) throw new Error(); }
     catch { setStatus("Vui lòng nhập URL ảnh http/https hợp lệ."); return; }
     lock.current = true; setBusy(true);
-    try { await saveSiteBanner({ imageUrl: url.trim(), title: title.trim() }); setStatus("Đã lưu ảnh bìa cho toàn bộ ứng dụng."); }
+    try { await saveSiteBanner({ imageUrl: url.trim(), title: title.trim(), backgroundUrl: backgroundUrl.trim() }); setStatus("Đã lưu ảnh bìa cho toàn bộ ứng dụng."); }
     catch (error) { setStatus(error instanceof Error ? error.message : "Không lưu được ảnh."); }
     finally { lock.current = false; setBusy(false); }
   }
   return <View style={s.wrapper}>
-    {editable && <><Text style={s.heading}>Ảnh bìa dưới danh sách phim</Text><Text style={s.hint}>Chọn ảnh từ máy hoặc dán URL ảnh công khai. Nên dùng ảnh ngang 16:7; để trống để dùng bìa mặc định.</Text><ImageUpload value={url} disabled={!ready || busy} onBusy={setUploading} onChange={value => { setUrl(value); setFailed(false); }} /><Text style={s.label}>URL ảnh bìa</Text><TextInput accessibilityLabel="URL ảnh bìa" editable={ready && !busy && !uploading} value={url} onChangeText={value => { setUrl(value); setFailed(false); }} autoCapitalize="none" style={s.input} /><Text style={s.label}>Tiêu đề / mô tả ảnh</Text><TextInput accessibilityLabel="Tiêu đề ảnh bìa" editable={ready && !busy && !uploading} value={title} onChangeText={setTitle} maxLength={150} style={s.input} /></>}
+    {editable && <><Text style={s.heading}>Ảnh bìa dưới danh sách phim</Text><Text style={s.hint}>Chọn ảnh từ máy hoặc dán URL ảnh công khai. Nên dùng ảnh ngang 16:7; để trống để dùng bìa mặc định.</Text><ImageUpload value={url} disabled={!ready || busy || uploading} onBusy={setUploading} onChange={value => { setUrl(value); setFailed(false); }} /><Text style={s.label}>URL ảnh bìa</Text><TextInput accessibilityLabel="URL ảnh bìa" editable={ready && !busy && !uploading} value={url} onChangeText={value => { setUrl(value); setFailed(false); }} autoCapitalize="none" style={s.input} /><Text style={s.label}>Tiêu đề / mô tả ảnh</Text><TextInput accessibilityLabel="Tiêu đề ảnh bìa" editable={ready && !busy && !uploading} value={title} onChangeText={setTitle} maxLength={150} style={s.input} /></>}
+    {editable && <><Text style={s.heading}>Ảnh nền phía sau poster phim</Text><ImageUpload value={backgroundUrl} disabled={!ready || busy || uploading} onBusy={setUploading} onChange={setBackgroundUrl} /><TextInput accessibilityLabel="URL ảnh nền carousel" placeholder="URL ảnh nền (để trống để bỏ ảnh)" placeholderTextColor="#BBC3D8" value={backgroundUrl} onChangeText={setBackgroundUrl} editable={ready && !busy && !uploading} autoCapitalize="none" style={s.input} /></>}
     <View style={s.banner}>
       {url && !failed ? <Image source={{ uri: imageUri(url) }} accessibilityLabel={title} style={StyleSheet.absoluteFill} resizeMode="cover" onError={() => setFailed(true)} /> : <Svg width="100%" height="100%" viewBox="0 0 960 420" preserveAspectRatio="xMidYMid slice"><Defs><LinearGradient id="banner" x1="0" y1="0" x2="1" y2="1"><Stop offset="0" stopColor="#772E52" /><Stop offset="1" stopColor="#172447" /></LinearGradient></Defs><Rect width="960" height="420" fill="url(#banner)" /><Circle cx="760" cy="120" r="240" fill="#DB7E92" opacity="0.15" /><Path d="M590 0 L360 420 H880 Z" fill="#FFF4D5" opacity="0.09" /><Rect x="590" y="85" width="240" height="170" rx="16" fill="#E4BCA6" transform="rotate(12 710 170)" /><Circle cx="710" cy="170" r="50" fill="#69324B" /><Circle cx="710" cy="170" r="13" fill="#E4BCA6" />{[0, 1, 2, 3, 4].map(n => <Rect key={n} x={600 + n * 44} y="290" width="30" height="70" rx="10" fill="#B94464" />)}</Svg>}
       {!url && <View style={s.copy}><Text style={s.kicker}>CINEBOOK / MOVIE NIGHT</Text><Text style={s.bannerTitle}>{title}</Text></View>}

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { bannerRouter } from "../modules/banner/banner.routes.js";
+import { homeContentRouter } from "../modules/home-content/home-content.routes.js";
 
 import { authRouter } from "../modules/auth/auth.routes.js";
 import { bookingRouter } from "../modules/bookings/booking.routes.js";
@@ -42,3 +43,4 @@ apiRouter.use("/notifications", notificationRouter);
 apiRouter.use("/favorites", favoriteRouter);
 apiRouter.use("/admin", adminRouter);
 apiRouter.use("/banner", bannerRouter);
+apiRouter.use("/home-content", homeContentRouter);

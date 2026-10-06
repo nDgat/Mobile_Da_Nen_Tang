@@ -15,6 +15,7 @@ enum UserRole {
 enum SeatType {
   STANDARD
   VIP
+  SWEETBOX
 }
 
 enum ShowtimeStatus {
@@ -116,6 +117,7 @@ enum MovieCategory {
 }
 
 model Movie {
+  categories Json?
   category        MovieCategory   @default(NOW_SHOWING)
   id              Int             @id @default(autoincrement())
   title           String          @db.VarChar(255)
@@ -351,9 +353,40 @@ model BookingConcessionItem {
 
 // Lịch sử dòng vé vẫn còn khi đơn hết hạn/hủy và ghế được bán cho đơn mới.
 model SiteBanner {
+  backgroundUrl String @default("") @db.VarChar(2048)
   id       Int     @id @default(1)
   imageUrl String  @db.VarChar(2048)
   title    String  @db.VarChar(150)
+}
+
+enum HomeContentSection {
+  BANNER
+  HOT_NEWS
+  VOUCHER
+  PARTNER_PROMOTION
+}
+
+enum HomeContentDisplay {
+  HERO
+  CARD
+  SQUARE
+}
+
+model HomeContentItem {
+  id           Int                @id @default(autoincrement())
+  section      HomeContentSection
+  title        String             @db.VarChar(180)
+  subtitle     String?            @db.VarChar(500)
+  imageUrl     String?            @db.VarChar(2048)
+  linkUrl      String?            @db.VarChar(2048)
+  badge        String?            @db.VarChar(60)
+  displayStyle HomeContentDisplay @default(CARD)
+  sortOrder    Int                @default(0)
+  isActive     Boolean            @default(true)
+  createdAt    DateTime           @default(now()) @db.DateTime(3)
+  updatedAt    DateTime           @updatedAt @db.DateTime(3)
+
+  @@index([section, isActive, sortOrder])
 }
 
 model BookingSeat {

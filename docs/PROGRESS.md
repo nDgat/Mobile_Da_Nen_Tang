@@ -629,3 +629,9 @@ Trạng thái: **Hoàn thành**.
 - [x] Lưu tại backend/uploads (không đưa vào Git); lưu đường dẫn tương đối và mở ảnh theo backend hiện tại để dùng chung web/điện thoại.
 - TypeScript backend/mobile, ESLint đạt; kiểm thử tải lên/đọc ảnh thật và phân quyền đạt, ảnh test được xóa; export web 15 route đạt.
 - Chưa kiểm thử hộp chọn ảnh thực tế trên iPhone/browser; chưa commit/push. Ảnh đã upload nhưng chưa lưu form vẫn nằm trên backend.
+
+## Nhiều nhóm phim, background và autoplay (2026-09-30)
+- [x] Một phim chọn được 1–3 nhóm trong Admin; cùng xuất hiện ở các tab đã chọn. Migration bảo toàn nhóm cũ; giữ category cho client/seed cũ.
+- [x] Admin → Ảnh bìa có mục Ảnh nền phía sau poster: chọn ảnh máy hoặc nhập URL, lưu độc lập với bìa bên dưới.
+- [x] Carousel tự chuyển sau 5 giây không tương tác; dừng khi kéo, app/tab không hoạt động hoặc rời màn hình; không autoplay khi chỉ có một phim hoặc bật giảm chuyển động.
+- Kiểm tra TypeScript backend/mobile và ESLint đạt; kiểm tra MySQL create/update/filter nhiều nhóm bằng bản ghi tạm đạt và đã xóa; test API ảnh nền đạt. Chưa kiểm thử trực quan/cử chỉ do browser không khởi tạo được; chưa commit/push.

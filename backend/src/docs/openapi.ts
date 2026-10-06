@@ -13,7 +13,22 @@ const errorResponse = (description: string) => ({ description, content: { "appli
 const paths: Record<string, Partial<Record<HttpMethod, Record<string, unknown>>>> = {};
 add("post", "/uploads", "Admin", "Tải ảnh JPG/PNG/WebP (tối đa 5 MB)", { admin: true, body: json({ base64: { type: "string", description: "Nội dung ảnh base64, không kèm tiền tố data URI" } }, ["base64"]) });
 add("get", "/banner", "Banner", "Lấy ảnh bìa chung của ứng dụng");
-add("put", "/banner", "Banner", "Cập nhật ảnh bìa", { admin: true, body: json({ imageUrl: { type: "string", maxLength: 2048, description: "URL http/https hoặc chuỗi rỗng để dùng ảnh mặc định" }, title: { type: "string", minLength: 1, maxLength: 150 } }, ["imageUrl", "title"]) });
+add("put", "/banner", "Banner", "Cập nhật ảnh bìa", { admin: true, body: json({ backgroundUrl: { type: "string", maxLength: 2048, description: "Ảnh nền phía sau poster; URL http/https hoặc đường dẫn uploads; để trống để bỏ nền" }, imageUrl: { type: "string", maxLength: 2048, description: "URL http/https hoặc chuỗi rỗng để dùng ảnh mặc định" }, title: { type: "string", minLength: 1, maxLength: 150 } }, ["imageUrl", "title"]) });
+
+const homeContentProperties = {
+  section: { type: "string", enum: ["BANNER", "HOT_NEWS", "VOUCHER", "PARTNER_PROMOTION"] },
+  title: { type: "string", minLength: 1, maxLength: 180 },
+  subtitle: { type: ["string", "null"], maxLength: 500 },
+  imageUrl: { type: ["string", "null"], maxLength: 2048 },
+  linkUrl: { type: ["string", "null"], maxLength: 2048 },
+  badge: { type: ["string", "null"], maxLength: 60 },
+  displayStyle: { type: "string", enum: ["HERO", "CARD", "SQUARE"] },
+  sortOrder: { type: "integer", minimum: 1 },
+  isActive: { type: "boolean" },
+};
+add("get", "/home-content", "Home content", "List home page content", { params: [...pageParameters, { name: "section", in: "query", schema: homeContentProperties.section }, { name: "active", in: "query", schema: { type: "boolean" } }] });
+add("post", "/home-content", "Home content", "Create home page content", { admin: true, body: json(homeContentProperties, ["section", "title", "displayStyle", "sortOrder"]) });
+add("patch", "/home-content/{id}", "Home content", "Update home page content", { admin: true, params: [idParameter()], body: json(homeContentProperties) });
 
 function add(method: HttpMethod, path: string, tag: string, summary: string, options: OperationOptions = {}) {
   const status = options.status ?? (method === "post" ? 201 : method === "delete" ? 204 : 200);
@@ -43,7 +58,7 @@ add("get", "/auth/me", "Auth", "Thông tin tài khoản hiện tại", { auth: t
 add("post", "/auth/refresh", "Auth", "Làm mới access token", { body: refreshBody, status: 200 });
 add("post", "/auth/logout", "Auth", "Đăng xuất và thu hồi refresh token", { body: refreshBody, status: 204 });
 
-const movieBody = json({ category: { type: "string", enum: ["NOW_SHOWING", "SPECIAL", "COMING_SOON"] }, title: { type: "string" }, synopsis: { type: "string", nullable: true }, durationMinutes: { type: "integer", minimum: 1 }, releaseDate: { type: "string", format: "date" }, posterUrl: { type: "string", format: "uri", nullable: true }, isActive: { type: "boolean" } }, ["title", "durationMinutes", "releaseDate"]);
+const movieBody = json({ categories: { type: "array", minItems: 1, maxItems: 3, uniqueItems: true, items: { type: "string", enum: ["NOW_SHOWING", "SPECIAL", "COMING_SOON"] } }, category: { type: "string", enum: ["NOW_SHOWING", "SPECIAL", "COMING_SOON"] }, title: { type: "string" }, synopsis: { type: "string", nullable: true }, durationMinutes: { type: "integer", minimum: 1 }, releaseDate: { type: "string", format: "date" }, posterUrl: { type: "string", format: "uri", nullable: true }, isActive: { type: "boolean" } }, ["title", "durationMinutes", "releaseDate"]);
 add("get", "/movies", "Movies", "Danh sách phim", { params: [...pageParameters, { name: "category", in: "query", schema: { type: "string", enum: ["NOW_SHOWING", "SPECIAL", "COMING_SOON"] } }] });
 add("get", "/movies/{id}", "Movies", "Chi tiết phim", { params: [idParameter()] });
 add("post", "/movies", "Movies", "Tạo phim", { admin: true, body: movieBody });
@@ -56,8 +71,8 @@ add("delete", "/movies/{id}/reviews/me", "Reviews", "Xóa đánh giá của tôi
 
 const resources = [
   ["cinemas", "Cinemas", "rạp", json({ name: { type: "string" }, address: { type: "string" }, city: { type: "string" }, isActive: { type: "boolean" } }, ["name", "address", "city"])],
-  ["rooms", "Rooms", "phòng chiếu", json({ cinemaId: { type: "integer" }, name: { type: "string" }, isActive: { type: "boolean" } }, ["cinemaId", "name"])],
-  ["seats", "Seats", "ghế", json({ roomId: { type: "integer" }, rowLabel: { type: "string" }, seatNumber: { type: "integer" }, type: { type: "string", enum: ["STANDARD", "VIP"] }, isActive: { type: "boolean" } }, ["roomId", "rowLabel", "seatNumber"])],
+  ["rooms", "Rooms", "phòng chiếu", json({ cinemaId: { type: "integer" }, name: { type: "string" }, seatLayout: { type: "array", minItems: 4, items: { type: "object", properties: { rowLabel: { type: "string" }, seatNumber: { type: "integer" }, type: { type: "string", enum: ["STANDARD", "VIP", "SWEETBOX"] } }, required: ["rowLabel", "seatNumber", "type"] } }, isActive: { type: "boolean" } }, ["cinemaId", "name"])],
+  ["seats", "Seats", "ghế", json({ roomId: { type: "integer" }, rowLabel: { type: "string" }, seatNumber: { type: "integer" }, type: { type: "string", enum: ["STANDARD", "VIP", "SWEETBOX"] }, isActive: { type: "boolean" } }, ["roomId", "rowLabel", "seatNumber"])],
 ] as const;
 for (const [resource, tag, label, body] of resources) {
   add("get", `/${resource}`, tag, `Danh sách ${label}`, { params: pageParameters });
@@ -71,7 +86,7 @@ add("get", "/showtimes", "Showtimes", "Danh sách suất chiếu", { params: pag
 add("get", "/showtimes/{id}", "Showtimes", "Chi tiết suất chiếu", { params: [idParameter()] });
 add("get", "/showtimes/{id}/seats", "Showtimes", "Sơ đồ ghế", { params: [idParameter()] });
 add("post", "/showtimes/{id}/hold-seats", "Bookings", "Giữ ghế trong 5 phút", { auth: true, params: [idParameter()], body: json({ showtimeSeatIds: { type: "array", minItems: 1, maxItems: 8, items: { type: "integer" } } }, ["showtimeSeatIds"]) });
-add("post", "/showtimes", "Showtimes", "Tạo suất chiếu", { admin: true, body: json({ movieId: { type: "integer" }, roomId: { type: "integer" }, startsAt: { type: "string", format: "date-time" }, standardPrice: { type: "integer" }, vipPrice: { type: "integer" } }, ["movieId", "roomId", "startsAt", "standardPrice", "vipPrice"]) });
+add("post", "/showtimes", "Showtimes", "Tạo suất chiếu", { admin: true, body: json({ movieId: { type: "integer" }, roomId: { type: "integer" }, startsAt: { type: "string", format: "date-time" }, standardPrice: { type: "integer" }, vipPrice: { type: "integer" }, sweetboxPrice: { type: "integer" } }, ["movieId", "roomId", "startsAt", "standardPrice", "vipPrice", "sweetboxPrice"]) });
 add("patch", "/showtimes/{id}/status", "Showtimes", "Đổi trạng thái suất chiếu", { admin: true, params: [idParameter()], body: json({ status: { type: "string", enum: ["SCHEDULED", "CANCELLED", "FINISHED"] } }, ["status"]) });
 
 add("get", "/bookings", "Bookings", "Lịch sử đặt vé", { auth: true, params: pageParameters });

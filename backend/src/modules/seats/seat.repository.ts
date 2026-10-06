@@ -16,5 +16,6 @@ export const findSeatById = (id: number) => prisma.seat.findUnique({ where: { id
 export const findRoomForSeat = (id: number) => prisma.room.findUnique({ where: { id } });
 export const findSeatByIdentity = (roomId: number, rowLabel: string, seatNumber: number) => prisma.seat.findUnique({ where: { roomId_rowLabel_seatNumber: { roomId, rowLabel, seatNumber } } });
 export const insertSeat = (data: SeatWriteData) => prisma.seat.create({ data });
+export const countFutureReservedSeatUsages = (seatId: number) => prisma.showtimeSeat.count({ where: { seatId, status: { in: ["HELD", "BOOKED"] }, showtime: { startsAt: { gt: new Date() } } } });
 export const updateSeatById = (id: number, data: SeatUpdateData) => prisma.seat.update({ where: { id }, data });
 

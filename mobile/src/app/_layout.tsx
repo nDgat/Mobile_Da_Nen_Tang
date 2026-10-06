@@ -20,6 +20,7 @@ export default function RootLayout() {
         options={{ headerShown: false }}
       />
       <Stack.Screen name="login" options={{ title: "Tài khoản", presentation: "modal" }} />
+      <Stack.Screen name="profile" options={{ headerShown: false }} />
       <Stack.Screen name="admin" options={{ headerShown: false }} />
       <Stack.Screen name="bookings/index" options={{ headerShown: false }} />
       <Stack.Screen name="bookings/[id]" options={{ headerShown: false }} />

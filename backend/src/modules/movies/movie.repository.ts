@@ -1,8 +1,9 @@
 import { prisma } from "../../database/prisma.js";
-import type { MovieCategory } from "../../generated/prisma/client.js";
+import { Prisma, type MovieCategory } from "../../generated/prisma/client.js";
 
 export interface MovieWriteData {
   category: MovieCategory;
+  categories?: MovieCategory[];
   title: string;
   synopsis: string | null;
   durationMinutes: number;
@@ -19,7 +20,7 @@ export async function findMoviePage(
   isActive?: boolean,
   category?: MovieCategory,
 ) {
-  const where = { ...(isActive === undefined ? {} : { isActive }), ...(category ? { category } : {}) };
+  const where = { ...(isActive === undefined ? {} : { isActive }), ...(category ? { OR: [{ categories: { array_contains: [category] } }, { categories: { equals: Prisma.DbNull }, category }] } : {}) };
 
   const [items, total] = await prisma.$transaction([
     prisma.movie.findMany({

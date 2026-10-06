@@ -1,4 +1,5 @@
 export interface Movie {
+  categories?: ("NOW_SHOWING" | "SPECIAL" | "COMING_SOON")[];
   category: "NOW_SHOWING" | "SPECIAL" | "COMING_SOON";
   id: number;
   title: string;
@@ -26,7 +27,7 @@ export interface ShowtimeSeat {
   seatId: number;
   rowLabel: string;
   seatNumber: number;
-  type: "STANDARD" | "VIP";
+  type: "STANDARD" | "VIP" | "SWEETBOX";
   price: string;
   status: "AVAILABLE" | "HELD" | "BOOKED";
 }
@@ -207,4 +208,21 @@ export interface FavoriteItem {
 export interface PaginatedResponse<T> {
   data: T[];
   meta: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export type HomeContentSection = "BANNER" | "HOT_NEWS" | "VOUCHER" | "PARTNER_PROMOTION";
+export type HomeContentDisplay = "HERO" | "CARD" | "SQUARE";
+export interface HomeContentItem {
+  id: number;
+  section: HomeContentSection;
+  title: string;
+  subtitle: string | null;
+  imageUrl: string | null;
+  linkUrl: string | null;
+  badge: string | null;
+  displayStyle: HomeContentDisplay;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }

@@ -22,7 +22,7 @@ export async function createSeatHold(userId: number, showtimeId: number, showtim
     if (!showtime) return { error: "SHOWTIME_NOT_FOUND" as const };
     if (showtime.status !== "SCHEDULED" || showtime.startsAt <= now) return { error: "SHOWTIME_UNAVAILABLE" as const };
     const seats = await tx.showtimeSeat.findMany({ where: { id: { in: showtimeSeatIds }, showtimeId }, include: { seat: true }, orderBy: [{ seat: { rowLabel: "asc" } }, { seat: { seatNumber: "asc" } }] });
-    if (seats.length !== showtimeSeatIds.length) return { error: "INVALID_SEATS" as const };
+    if (seats.length !== showtimeSeatIds.length || seats.some(item => !item.seat.isActive)) return { error: "INVALID_SEATS" as const };
     if (seats.some(seat => seat.status !== "AVAILABLE" || seat.currentBookingId !== null)) return { error: "SEATS_UNAVAILABLE" as const };
     const pricing = calculateBookingPricing(seats.map(seat => BigInt(seat.price.toString())));
     const booking = await tx.booking.create({ data: {

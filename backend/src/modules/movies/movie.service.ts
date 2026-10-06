@@ -26,6 +26,7 @@ export class MovieNotFoundError extends Error {
 
 export interface MovieDto {
   category: MovieCategory;
+  categories: MovieCategory[];
   id: number;
   title: string;
   synopsis: string | null;
@@ -40,6 +41,7 @@ export interface MovieDto {
 function toMovieDto(movie: Movie): MovieDto {
   return {
     category: movie.category,
+    categories: Array.isArray(movie.categories) ? readCategories(movie.categories) : [movie.category],
     id: movie.id,
     title: movie.title,
     synopsis: movie.synopsis,
@@ -145,7 +147,8 @@ function readCreateData(value: unknown): MovieWriteData {
   const body = requireObject(value);
 
   return {
-    category: body.category === undefined ? "NOW_SHOWING" : readCategory(body.category),
+    category: body.categories === undefined ? (body.category === undefined ? "NOW_SHOWING" : readCategory(body.category)) : readCategories(body.categories)[0]!,
+    categories: body.categories === undefined ? [body.category === undefined ? "NOW_SHOWING" : readCategory(body.category)] : readCategories(body.categories),
     title: readRequiredText(body.title, "title", 255),
     synopsis: readNullableText(body.synopsis, "synopsis"),
     durationMinutes: readPositiveInteger(
@@ -159,6 +162,10 @@ function readCreateData(value: unknown): MovieWriteData {
   };
 }
 
+export function readCategories(value: unknown): MovieCategory[] {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 3) throw new MovieValidationError("Chọn từ 1 đến 3 nhóm phim.");
+  return [...new Set(value.map(readCategory))];
+}
 export function readCategory(value: unknown): MovieCategory {
   if (value !== "NOW_SHOWING" && value !== "SPECIAL" && value !== "COMING_SOON") throw new MovieValidationError("category phải là NOW_SHOWING, SPECIAL hoặc COMING_SOON.");
   return value;
@@ -175,7 +182,8 @@ function readBoolean(value: unknown): boolean {
 function readUpdateData(value: unknown): MovieUpdateData {
   const body = requireObject(value);
   const data: MovieUpdateData = {};
-  if (hasOwn(body, "category")) data.category = readCategory(body.category);
+  if (hasOwn(body, "categories")) { data.categories = readCategories(body.categories); data.category = data.categories[0]!; }
+  else if (hasOwn(body, "category")) { data.category = readCategory(body.category); data.categories = [data.category]; }
 
   if (hasOwn(body, "title")) {
     data.title = readRequiredText(body.title, "title", 255);

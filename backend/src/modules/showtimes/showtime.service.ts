@@ -37,14 +37,16 @@ export async function createShowtime(value: unknown) {
   const startsAt = dateTime(body.startsAt, "startsAt");
   const standardPrice = price(body.standardPrice, "standardPrice");
   const vipPrice = price(body.vipPrice, "vipPrice");
+  const sweetboxPrice = body.sweetboxPrice === undefined ? vipPrice * 2n : price(body.sweetboxPrice, "sweetboxPrice");
   if (vipPrice < standardPrice) throw new ShowtimeValidationError("vipPrice không được thấp hơn standardPrice.");
+  if (sweetboxPrice < vipPrice) throw new ShowtimeValidationError("sweetboxPrice không được thấp hơn vipPrice.");
   const [movie, room, seatCount] = await Promise.all([findMovieForShowtime(movieId), findRoomForShowtime(roomId), countActiveRoomSeats(roomId)]);
   if (!movie || !movie.isActive) throw new ShowtimeValidationError(`Phim ${movieId} không tồn tại hoặc đã ngừng hoạt động.`);
   if (!room || !room.isActive) throw new ShowtimeValidationError(`Phòng ${roomId} không tồn tại hoặc đã ngừng hoạt động.`);
   if (seatCount === 0) throw new ShowtimeValidationError("Phòng chưa có ghế hoạt động.");
   const endsAt = new Date(startsAt.getTime() + movie.durationMinutes * 60_000);
   if (await findOverlappingShowtime(roomId, startsAt, endsAt)) throw new ShowtimeConflictError("Thời gian suất chiếu bị trùng lịch của phòng.");
-  return { data: toDto(await insertShowtimeWithSeats({ movieId, roomId, startsAt, endsAt }, standardPrice, vipPrice)), seatCount };
+  return { data: toDto(await insertShowtimeWithSeats({ movieId, roomId, startsAt, endsAt }, standardPrice, vipPrice, sweetboxPrice)), seatCount };
 }
 
 export async function changeShowtimeStatus(id: number, value: unknown) {
