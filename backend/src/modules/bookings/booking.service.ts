@@ -68,6 +68,8 @@ export async function holdSeats(userId: number, showtimeIdValue: string, body: u
   if ("error" in result) {
     if (result.error === "SHOWTIME_NOT_FOUND") throw new HoldNotFoundError("Không tìm thấy suất chiếu.");
     if (result.error === "SEATS_UNAVAILABLE") throw new HoldConflictError("Một hoặc nhiều ghế vừa được người khác giữ hoặc đặt.");
+    if (result.error === "NON_CONTIGUOUS_SELECTION") throw new HoldValidationError("Vui lòng chọn các ghế liền nhau, không chừa ghế trống ở giữa.");
+    if (result.error === "ORPHAN_SEAT") throw new HoldValidationError("Không được chừa lại một ghế trống ở bên trái hoặc bên phải.");
     throw new HoldValidationError(result.error === "SHOWTIME_UNAVAILABLE" ? "Suất chiếu không còn nhận đặt vé." : "Ghế không thuộc suất chiếu này.");
   }
   return {

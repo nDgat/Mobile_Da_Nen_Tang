@@ -4,7 +4,7 @@ import type { AuthSession, BookingDetails, BookingHistoryItem, BookingStatus, Ci
 import { deleteStoredItem, getStoredItem, setStoredItem } from "./secure-storage";
 
 const SESSION_KEY = "cinebook.auth.session";
-export function imageUri(value: string) { return value.startsWith("/uploads/") ? `${getApiBaseUrl().replace(/\/api\/v1$/, "")}${value}` : value; }
+export function imageUri(value: string) { return value.startsWith("/uploads/") || value.startsWith("/assets/") ? `${getApiBaseUrl().replace(/\/api\/v1$/, "")}${value}` : value; }
 export async function uploadImage(base64: string) { return (await authenticatedJson<{ data: { url: string } }>("/uploads", { method: "POST", body: JSON.stringify({ base64 }) })).data.url; }
 export type SiteBanner = { backgroundUrl?: string; id: number; imageUrl: string; title: string };
 export async function getSiteBanner(signal?: AbortSignal) { return (await apiGet<{ data: SiteBanner }>("/banner", signal)).data; }
@@ -230,6 +230,11 @@ export async function removeFavorite(movieId: number) {
 
 export async function getFavorites(page = 1) {
   return authenticatedJson<PaginatedResponse<FavoriteItem>>(`/favorites?page=${page}&limit=20`);
+}
+
+export async function getActiveCinemas(signal?: AbortSignal) {
+  const response = await apiGet<PaginatedResponse<Cinema>>("/cinemas?page=1&limit=100&active=true", signal);
+  return response.data;
 }
 
 export async function getCinemaOptions(movieId: number, signal?: AbortSignal) {

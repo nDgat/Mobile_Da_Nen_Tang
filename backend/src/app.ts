@@ -1,4 +1,5 @@
 import express from "express";
+import { fileURLToPath } from "node:url";
 import { uploadRouter, uploadedImages } from "./modules/uploads/upload.routes.js";
 import swaggerUi from "swagger-ui-express";
 
@@ -11,6 +12,8 @@ import { requestLogger } from "./middleware/request-logger.js";
 import { cors } from "./middleware/cors.js";
 import { openApiDocument } from "./docs/openapi.js";
 
+const publicDirectory = fileURLToPath(new URL("../public/", import.meta.url));
+
 export const app = express();
 
 app.disable("x-powered-by");
@@ -19,6 +22,7 @@ app.use(requestLogger);
 app.use(cors);
 app.use("/api/v1/uploads", uploadRouter);
 app.use("/uploads", uploadedImages);
+app.use("/assets", express.static(publicDirectory, { index: false, dotfiles: "deny", maxAge: "1y", immutable: true, setHeaders: response => { response.setHeader("X-Content-Type-Options", "nosniff"); } }));
 app.use(express.json());
 
 app.get("/api-docs.json", (_request, response) => response.json(openApiDocument));

@@ -2,6 +2,7 @@ import type { Prisma } from "../../generated/prisma/client.js";
 import { prisma } from "../../database/prisma.js";
 import { calculateBookingPricing } from "./booking.pricing.js";
 import { evaluateVoucher } from "../vouchers/voucher.pricing.js";
+import { findSeatSelectionViolation } from "./booking.seat-selection.js";
 
 export async function releaseExpiredHolds(tx: Prisma.TransactionClient, now: Date) {
   const expired = await tx.booking.findMany({ where: { status: { in: ["PENDING", "AWAITING_PAYMENT"] }, expiresAt: { lte: now } }, select: { id: true } });
@@ -16,14 +17,17 @@ export async function createSeatHold(userId: number, showtimeId: number, showtim
   return prisma.$transaction(async tx => {
     const now = new Date();
     await releaseExpiredHolds(tx, now);
-    const placeholders = showtimeSeatIds.map(() => "?").join(",");
-    await tx.$queryRawUnsafe(`SELECT id FROM ShowtimeSeat WHERE id IN (${placeholders}) FOR UPDATE`, ...showtimeSeatIds);
+    await tx.$queryRawUnsafe("SELECT id FROM ShowtimeSeat WHERE showtimeId = ? FOR UPDATE", showtimeId);
     const showtime = await tx.showtime.findUnique({ where: { id: showtimeId } });
     if (!showtime) return { error: "SHOWTIME_NOT_FOUND" as const };
     if (showtime.status !== "SCHEDULED" || showtime.startsAt <= now) return { error: "SHOWTIME_UNAVAILABLE" as const };
-    const seats = await tx.showtimeSeat.findMany({ where: { id: { in: showtimeSeatIds }, showtimeId }, include: { seat: true }, orderBy: [{ seat: { rowLabel: "asc" } }, { seat: { seatNumber: "asc" } }] });
-    if (seats.length !== showtimeSeatIds.length || seats.some(item => !item.seat.isActive)) return { error: "INVALID_SEATS" as const };
+    const seatMap = await tx.showtimeSeat.findMany({ where: { showtimeId, seat: { isActive: true } }, include: { seat: true }, orderBy: [{ seat: { rowLabel: "asc" } }, { seat: { seatNumber: "asc" } }] });
+    const selectedIds = new Set(showtimeSeatIds);
+    const seats = seatMap.filter(item => selectedIds.has(item.id));
+    if (seats.length !== showtimeSeatIds.length) return { error: "INVALID_SEATS" as const };
     if (seats.some(seat => seat.status !== "AVAILABLE" || seat.currentBookingId !== null)) return { error: "SEATS_UNAVAILABLE" as const };
+    const selectionViolation = findSeatSelectionViolation(seatMap.map(item => ({ id: item.id, rowLabel: item.seat.rowLabel, seatNumber: item.seat.seatNumber, status: item.status })), selectedIds);
+    if (selectionViolation) return { error: selectionViolation };
     const pricing = calculateBookingPricing(seats.map(seat => BigInt(seat.price.toString())));
     const booking = await tx.booking.create({ data: {
       userId, showtimeId, status: "PENDING", expiresAt,

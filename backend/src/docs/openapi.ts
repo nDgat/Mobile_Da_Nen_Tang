@@ -70,7 +70,7 @@ add("put", "/movies/{id}/reviews/me", "Reviews", "Tạo hoặc cập nhật đá
 add("delete", "/movies/{id}/reviews/me", "Reviews", "Xóa đánh giá của tôi", { auth: true, params: [idParameter()] });
 
 const resources = [
-  ["cinemas", "Cinemas", "rạp", json({ name: { type: "string" }, address: { type: "string" }, city: { type: "string" }, isActive: { type: "boolean" } }, ["name", "address", "city"])],
+  ["cinemas", "Cinemas", "rạp", json({ name: { type: "string" }, address: { type: "string" }, city: { type: "string" }, latitude: { type: "number", minimum: 8, maximum: 24 }, longitude: { type: "number", minimum: 102, maximum: 115 }, isActive: { type: "boolean" } }, ["name", "address", "city", "latitude", "longitude"])],
   ["rooms", "Rooms", "phòng chiếu", json({ cinemaId: { type: "integer" }, name: { type: "string" }, seatLayout: { type: "array", minItems: 4, items: { type: "object", properties: { rowLabel: { type: "string" }, seatNumber: { type: "integer" }, type: { type: "string", enum: ["STANDARD", "VIP", "SWEETBOX"] } }, required: ["rowLabel", "seatNumber", "type"] } }, isActive: { type: "boolean" } }, ["cinemaId", "name"])],
   ["seats", "Seats", "ghế", json({ roomId: { type: "integer" }, rowLabel: { type: "string" }, seatNumber: { type: "integer" }, type: { type: "string", enum: ["STANDARD", "VIP", "SWEETBOX"] }, isActive: { type: "boolean" } }, ["roomId", "rowLabel", "seatNumber"])],
 ] as const;
@@ -116,7 +116,12 @@ add("patch", "/admin/users/{id}/status", "Admin", "Khóa hoặc mở tài khoả
 add("get", "/admin/bookings", "Admin", "Quản lý booking", { admin: true, params: pageParameters });
 add("get", "/admin/reviews", "Admin", "Kiểm duyệt đánh giá", { admin: true, params: pageParameters });
 add("patch", "/admin/reviews/{id}/visibility", "Admin", "Ẩn hoặc hiện đánh giá", { admin: true, params: [idParameter()], body: json({ isVisible: { type: "boolean" } }, ["isVisible"]) });
-add("get", "/admin/audit-logs", "Admin", "Nhật ký kiểm toán", { admin: true, params: pageParameters });
+add("get", "/admin/audit-logs", "Admin", "Nhật ký kiểm toán", { admin: true, params: [
+  ...pageParameters,
+  { name: "actorId", in: "query", schema: { type: "integer", minimum: 1 } },
+  ...["action", "entityType", "entityId", "search"].map(name => ({ name, in: "query", schema: { type: "string", maxLength: 100 } })),
+  ...["from", "to"].map(name => ({ name, in: "query", description: "Ngày Việt Nam, bao gồm cả ngày này (UTC+7)", schema: { type: "string", format: "date" } })),
+] });
 
 export const openApiDocument = {
   openapi: "3.0.3",

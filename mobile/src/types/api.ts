@@ -20,7 +20,7 @@ export interface Showtime {
 }
 
 export interface Room { id: number; cinemaId: number; name: string; isActive: boolean; }
-export interface Cinema { id: number; name: string; address: string; city: string; isActive: boolean; }
+export interface Cinema { id: number; name: string; address: string; city: string; latitude: number | null; longitude: number | null; isActive: boolean; }
 
 export interface ShowtimeSeat {
   id: number;

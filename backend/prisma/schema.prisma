@@ -140,8 +140,10 @@ model Cinema {
   id       Int     @id @default(autoincrement())
   name     String  @db.VarChar(150)
   address  String  @db.VarChar(255)
-  city     String  @db.VarChar(100)
-  isActive Boolean @default(true)
+  city      String   @db.VarChar(100)
+  latitude  Decimal? @db.Decimal(10, 7)
+  longitude Decimal? @db.Decimal(10, 7)
+  isActive  Boolean  @default(true)
   rooms    Room[]
 
   @@index([city])

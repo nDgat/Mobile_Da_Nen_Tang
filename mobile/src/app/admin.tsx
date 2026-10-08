@@ -1,14 +1,16 @@
 import { ImageUpload } from "../components/ImageUpload";
 import { SiteBanner } from "../components/SiteBanner";
-import { Link, useFocusEffect } from "expo-router";
+import { Link, Redirect, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ApiError, authenticatedJson, getCurrentUser } from "../services/api";
 import type { AuthSession, PaginatedResponse } from "../types/api";
 import { display, formBody, labels, sections, valueAt, type Row, type Section } from "../components/admin/config";
 import { createDefaultRoomLayout, RoomLayoutEditor, type RoomLayoutSeat } from "../components/admin/RoomLayoutEditor";
 import { SeatRoomManager } from "../components/admin/SeatRoomManager";
+import { AdminAuditLogs } from "../components/admin/AdminAuditLogs";
+import { CinemaLocationPicker } from "../components/admin/CinemaLocationPicker";
 
 type References = Record<"movies" | "cinemas" | "rooms", Row[]>;
 type Dashboard = { users: number; activeMovies: number; activeCinemas: number; bookings: number; todayBookings: number; revenue: string; recentBookings: Row[] };
@@ -20,7 +22,11 @@ function Button({ title, onPress, disabled, primary = false }: { title: string; 
   return <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={({ pressed }) => [s.button, primary && s.primary, (disabled || pressed) && { opacity: 0.5 }]}><Text style={s.buttonText}>{title}</Text></Pressable>;
 }
 
-export default function AdminScreen() {
+export default function AdminRoute() {
+  return Platform.OS === "web" ? <AdminScreen /> : <Redirect href="/" />;
+}
+
+function AdminScreen() {
   const wide = useWindowDimensions().width >= 960;
   const [user, setUser] = useState<AuthSession["user"] | null>(null);
   const [accessError, setAccessError] = useState("");
@@ -43,6 +49,7 @@ export default function AdminScreen() {
   const [values, setValues] = useState<Record<string, string>>({});
   const [roomLayout, setRoomLayout] = useState<RoomLayoutSeat[]>(createDefaultRoomLayout);
   const [formError, setFormError] = useState("");
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
   const [pending, setPending] = useState<Action | null>(null);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -63,7 +70,7 @@ export default function AdminScreen() {
   }, [version]);
 
   useEffect(() => {
-    if (!user || tab === "banner") return;
+    if (!user || tab === "banner" || tab === "audit-logs") return;
     const controller = new AbortController();
     const init = { signal: controller.signal };
     setLoading(true); setError(""); setRows([]); setDashboard(null);
@@ -166,6 +173,7 @@ export default function AdminScreen() {
       const firstReference = field.source ? refs[field.source].find(item => item.isActive !== false) : undefined;
       return [field.key, defaults[field.key] ?? field.options?.[0] ?? (firstReference ? String(firstReference.id) : "")];
     })));
+    setLocationConfirmed(false);
     setFormError(""); setEditor({ section: config, row });
   }
   async function mutate(path: string, body: Record<string, unknown>, method: string) {
@@ -182,6 +190,13 @@ export default function AdminScreen() {
   function save() {
     if (!editor || uploading) return;
     try {
+      if (editor.section.key === "cinemas") {
+        const latitude = Number(values.latitude), longitude = Number(values.longitude);
+        if (!values.latitude?.trim() || !values.longitude?.trim() || !Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < 8 || latitude > 24 || longitude < 102 || longitude > 115) {
+          throw new Error("Vui lòng chọn vị trí rạp hợp lệ trên bản đồ.");
+        }
+        if (!locationConfirmed) throw new Error("Vui lòng đối chiếu bản đồ và xác nhận đúng chi nhánh rạp trước khi lưu.");
+      }
       const body = formBody(editor.section.fields ?? [], values);
       if (editor.section.key === "rooms" && !editor.row) body.seatLayout = roomLayout;
       if (editor.section.key === "seats" && editor.row) { delete body.roomId; delete body.rowLabel; }
@@ -195,6 +210,7 @@ export default function AdminScreen() {
     if (section.key === "showtimes") return ["SCHEDULED", "CANCELLED", "FINISHED"].filter(status => status !== row.status).map(status => <Button key={status} title={labels[status]} onPress={() => confirm({ title: `Đổi suất #${row.id} sang “${labels[status]}”?`, path: `/showtimes/${row.id}/status`, body: { status } })} />);
     if (section.fields || section.key === "users") return <>
       {section.fields && <Button title="Chỉnh sửa" onPress={() => edit(section, row)} />}
+      {section.key === "cinemas" && row.latitude != null && row.longitude != null && <Button title="Xem bản đồ" onPress={() => void Linking.openURL("https://www.openstreetmap.org/?mlat=" + row.latitude + "&mlon=" + row.longitude + "#map=17/" + row.latitude + "/" + row.longitude)} />}
       <Button disabled={row.id === user?.id && section.key === "users"} title={row.isActive ? "Ngừng hoạt động" : "Kích hoạt"} onPress={() => confirm({ title: `${row.isActive ? "Ngừng hoạt động" : "Kích hoạt"} ${row.title ?? row.name ?? row.fullName ?? `#${row.id}`}?`, path: `${section.path}/${row.id}${section.key === "users" ? "/status" : ""}`, body: { isActive: !row.isActive } })} />
     </>;
     if (section.key === "reviews") return <Button title={row.isVisible ? "Ẩn đánh giá" : "Hiện đánh giá"} onPress={() => confirm({ title: `${row.isVisible ? "Ẩn" : "Hiện"} đánh giá #${row.id}?`, path: `${section.path}/${row.id}/visibility`, body: { isVisible: !row.isVisible } })} />;
@@ -212,7 +228,7 @@ export default function AdminScreen() {
         </ScrollView>
         <Link href="/" style={s.link}>← Về ứng dụng</Link>
       </View>
-      <ScrollView style={s.main} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
+      {tab === "audit-logs" ? <View style={s.main}><AdminAuditLogs /></View> : <ScrollView style={s.main} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
         <Text style={s.eyebrow}>KHÔNG GIAN QUẢN TRỊ</Text>
         <View style={s.toolbar}><View><Text style={s.title}>{tab === "banner" ? "Ảnh bìa" : section?.label ?? "Tổng quan kinh doanh"}</Text><Text style={s.muted}>{section ? "Quản lý dữ liệu CineBook" : "Theo dõi hoạt động hệ thống và các đơn đặt vé mới."}</Text></View><View style={s.actions}><Button title="Làm mới" disabled={loading} onPress={() => setVersion(v => v + 1)} />{section?.fields && section.key !== "seats" && <Button primary title={section.key === "rooms" ? "+ Thêm phòng" : "+ Thêm mới"} disabled={loading || !!error} onPress={() => edit(section)} />}</View></View>
         {!!notice && <Text accessibilityRole="alert" style={s.success}>{notice}</Text>}
@@ -245,15 +261,19 @@ export default function AdminScreen() {
             <View style={s.actions}><Button title="← Trang trước" disabled={page <= 1} onPress={() => setPage(p => p - 1)} /><Button title="Trang sau →" disabled={page >= pages} onPress={() => setPage(p => p + 1)} /></View>
           </>}
         </>}
-      </ScrollView>
+      </ScrollView>}
     </View>
     <Modal visible={!!editor || !!pending} transparent animationType="fade" onRequestClose={() => { if (!busy && !uploading) { setEditor(null); setPending(null); } }}>
       <View style={s.overlay}><View style={s.dialog}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.dialogContent}>
         <Text style={s.subtitle}>{editor ? `${editor.row ? "Chỉnh sửa" : "Thêm"} ${editor.section.label.toLowerCase()}` : "Xác nhận thay đổi"}</Text>
-        {editor ? <>{editor.section.key === "seats" && <View style={s.field}><Text style={s.value}>Phòng cố định</Text><Text style={s.lockedValue}>{selectedRoomLabel(values.roomId)}</Text><Text style={s.value}>Hàng cố định</Text><Text style={s.lockedValue}>{values.rowLabel}</Text></View>}{editor.section.fields?.filter(field => !(editor.section.key === "seats" && (field.key === "roomId" || field.key === "rowLabel"))).map(field => <View key={field.key} style={s.field}><Text style={s.value}>{field.label}{!field.optional && " *"}</Text>{field.source || field.options ? <View style={s.options}>
+        {editor ? <>{editor.section.key === "seats" && <View style={s.field}><Text style={s.value}>Phòng cố định</Text><Text style={s.lockedValue}>{selectedRoomLabel(values.roomId)}</Text><Text style={s.value}>Hàng cố định</Text><Text style={s.lockedValue}>{values.rowLabel}</Text></View>}{editor.section.fields?.filter(field => !(editor.section.key === "cinemas" && (field.key === "latitude" || field.key === "longitude"))).filter(field => !(editor.section.key === "seats" && (field.key === "roomId" || field.key === "rowLabel"))).map(field => <View key={field.key} style={s.field}><Text style={s.value}>{field.label}{!field.optional && " *"}</Text>{field.source || field.options ? <View style={s.options}>
           {(field.source ? refs[field.source].filter(row => row.isActive !== false || String(row.id) === values[field.key]).map(row => ({ value: String(row.id), label: refLabel(field.source!, row) })) : field.options!.map(value => ({ value, label: labels[value] ?? value }))).map(option => <Pressable key={option.value} accessibilityRole={field.multiple ? "checkbox" : "radio"} accessibilityState={{ checked: field.multiple ? (values[field.key] ?? "").split(",").includes(option.value) : values[field.key] === option.value, disabled: busy }} disabled={busy || uploading} onPress={() => setValues(old => { const selected = (old[field.key] ?? "").split(",").filter(Boolean); return { ...old, [field.key]: field.multiple ? (selected.includes(option.value) ? selected.filter(value => value !== option.value) : [...selected, option.value]).join(",") : option.value }; })} style={[s.button, (field.multiple ? (values[field.key] ?? "").split(",").includes(option.value) : values[field.key] === option.value) && s.selected]}><Text style={s.buttonText}>{option.label}</Text></Pressable>)}
           {field.source && !refs[field.source].some(row => row.isActive !== false) && <Text style={s.muted}>Chưa có dữ liệu hoạt động để chọn.</Text>}
-        </View> : <TextInput accessibilityLabel={field.label} editable={!busy && !uploading} value={values[field.key] ?? ""} onChangeText={value => setValues(old => ({ ...old, [field.key]: value }))} keyboardType={field.kind === "number" ? "numeric" : "default"} autoCapitalize="none" multiline={field.key === "synopsis"} style={s.input} placeholderTextColor="#8790A7" />}{(field.key === "posterUrl" || field.key === "imageUrl") && <ImageUpload value={values[field.key] ?? ""} disabled={busy || uploading} onBusy={setUploading} onChange={url => setValues(old => ({ ...old, [field.key]: url }))} />}</View>)}{editor.section.key === "rooms" && !editor.row && <RoomLayoutEditor onChange={setRoomLayout} />}</> : <Text style={s.value}>{pending?.title}</Text>}
+        </View> : <TextInput accessibilityLabel={field.label} editable={!busy && !uploading} value={values[field.key] ?? ""} onChangeText={value => { if (editor.section.key === "cinemas") setLocationConfirmed(false); setValues(old => ({ ...old, [field.key]: value })); }} keyboardType={field.kind === "number" ? "numeric" : field.kind === "decimal" ? "decimal-pad" : "default"} autoCapitalize="none" multiline={field.key === "synopsis"} style={s.input} placeholderTextColor="#8790A7" />}{(field.key === "posterUrl" || field.key === "imageUrl") && <ImageUpload value={values[field.key] ?? ""} disabled={busy || uploading} onBusy={setUploading} onChange={url => setValues(old => ({ ...old, [field.key]: url }))} />}</View>)}{editor.section.key === "cinemas" && <CinemaLocationPicker
+          values={values} cinemas={refs.cinemas} editingId={editor.row?.id}
+          disabled={busy || uploading} confirmed={locationConfirmed} onConfirm={confirmed => { setLocationConfirmed(confirmed); setFormError(""); }}
+          onChange={(latitude, longitude) => { setLocationConfirmed(false); setValues(old => ({ ...old, latitude, longitude })); }}
+        />}{editor.section.key === "rooms" && !editor.row && <RoomLayoutEditor onChange={setRoomLayout} />}</> : <Text style={s.value}>{pending?.title}</Text>}
         {!!formError && <Text accessibilityRole="alert" style={s.error}>{formError}</Text>}
         <View style={s.actions}><Button title="Hủy" disabled={busy || uploading} onPress={() => { setEditor(null); setPending(null); }} /><Button primary title={busy ? "Đang lưu..." : "Lưu thay đổi"} disabled={busy || uploading} onPress={() => { if (editor) save(); else if (pending) void mutate(pending.path, pending.body, "PATCH"); }} /></View>
       </ScrollView></View></View>

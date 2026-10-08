@@ -43,7 +43,7 @@ export default function ProfileScreen() {
         <ProfileLink href="/favorites" icon="♥" title="Phim yêu thích" />
         <ProfileLink href="/bookings" icon="🎟" title="Lịch sử đặt vé" />
         <ProfileLink href="/notifications" icon="🔔" title="Thông báo" />
-        {user.role === "ADMIN" && <ProfileLink href="/admin" icon="⚙" title="Khu vực quản trị" />}
+        {Platform.OS === "web" && user.role === "ADMIN" && <ProfileLink href="/admin" icon="⚙" title="Khu vực quản trị" />}
       </View>
       <Pressable accessibilityRole="button" onPress={signOut} style={s.logout}><Text style={s.logoutText}>Đăng xuất</Text></Pressable>
     </ScrollView>

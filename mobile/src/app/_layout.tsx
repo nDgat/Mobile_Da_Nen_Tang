@@ -1,5 +1,6 @@
 import { Stack, type Href, router } from "expo-router";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 import { subscribeToNotificationResponses } from "../services/notification-response";
 
 export default function RootLayout() {
@@ -21,7 +22,9 @@ export default function RootLayout() {
       />
       <Stack.Screen name="login" options={{ title: "Tài khoản", presentation: "modal" }} />
       <Stack.Screen name="profile" options={{ headerShown: false }} />
-      <Stack.Screen name="admin" options={{ headerShown: false }} />
+      <Stack.Screen name="cinemas-map" options={{ headerShown: false }} />
+      {Platform.OS === "web" && <Stack.Screen name="admin" options={{ headerShown: false }} />}
+      <Stack.Screen name="admin-logs" options={{ headerShown: false }} />
       <Stack.Screen name="bookings/index" options={{ headerShown: false }} />
       <Stack.Screen name="bookings/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="tickets/[bookingId]" options={{ headerShown: false }} />

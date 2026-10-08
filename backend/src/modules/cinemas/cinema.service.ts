@@ -29,6 +29,8 @@ export interface CinemaDto {
   name: string;
   address: string;
   city: string;
+  latitude: number | null;
+  longitude: number | null;
   isActive: boolean;
 }
 
@@ -38,6 +40,8 @@ function toCinemaDto(cinema: Cinema): CinemaDto {
     name: cinema.name,
     address: cinema.address,
     city: cinema.city,
+    latitude: cinema.latitude === null ? null : Number(cinema.latitude),
+    longitude: cinema.longitude === null ? null : Number(cinema.longitude),
     isActive: cinema.isActive,
   };
 }
@@ -71,6 +75,15 @@ function readRequiredText(
   }
 
   return text;
+}
+
+export function readCoordinate(value: unknown, fieldName: "latitude" | "longitude"): number {
+  const parsed = typeof value === "number" ? value : Number(value);
+  const range = fieldName === "latitude" ? { minimum: 8, maximum: 24 } : { minimum: 102, maximum: 115 };
+  if (!Number.isFinite(parsed) || parsed < range.minimum || parsed > range.maximum) {
+    throw new CinemaValidationError(fieldName + " phải là tọa độ hợp lệ trong phạm vi Việt Nam.");
+  }
+  return parsed;
 }
 
 function readBoolean(value: unknown): boolean {
@@ -107,6 +120,8 @@ function readCreateData(value: unknown): CinemaWriteData {
     name: readRequiredText(body.name, "name", 150),
     address: readRequiredText(body.address, "address", 255),
     city: readRequiredText(body.city, "city", 100),
+    latitude: readCoordinate(body.latitude, "latitude"),
+    longitude: readCoordinate(body.longitude, "longitude"),
     isActive: body.isActive === undefined ? true : readBoolean(body.isActive),
   };
 }
@@ -123,6 +138,15 @@ function readUpdateData(value: unknown): CinemaUpdateData {
   }
   if (hasOwn(body, "city")) {
     data.city = readRequiredText(body.city, "city", 100);
+  }
+  const hasLatitude = hasOwn(body, "latitude");
+  const hasLongitude = hasOwn(body, "longitude");
+  if (hasLatitude !== hasLongitude) {
+    throw new CinemaValidationError("Phải cập nhật đồng thời latitude và longitude.");
+  }
+  if (hasLatitude && hasLongitude) {
+    data.latitude = readCoordinate(body.latitude, "latitude");
+    data.longitude = readCoordinate(body.longitude, "longitude");
   }
   if (hasOwn(body, "isActive")) {
     data.isActive = readBoolean(body.isActive);

@@ -44,6 +44,12 @@
       "expo-secure-store",
       "expo-notifications",
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Cho phép CineBook sử dụng vị trí để tính khoảng cách và tìm rạp gần bạn."
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "Cho phép CineBook chọn ảnh poster và ảnh bìa.",

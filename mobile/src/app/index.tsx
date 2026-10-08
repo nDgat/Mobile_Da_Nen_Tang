@@ -82,7 +82,7 @@ export default function HomeScreen() {
             <MenuLink href="/notifications" icon="🔔" title="Thông báo" badge={unread} onOpen={() => setMenuOpen(false)} />
             <View style={styles.menuDivider} />
             <MenuLink href={user ? "/profile" : "/login"} icon="👤" title={user ? "Thông tin tài khoản" : "Đăng nhập / Đăng ký"} onOpen={() => setMenuOpen(false)} />
-            {user?.role === "ADMIN" && <MenuLink href="/admin" icon="⚙" title="Khu vực quản trị" onOpen={() => setMenuOpen(false)} />}
+            {Platform.OS === "web" && user?.role === "ADMIN" && <MenuLink href="/admin" icon="⚙" title="Khu vực quản trị" onOpen={() => setMenuOpen(false)} />}
             {user && <Pressable accessibilityRole="button" onPress={confirmLogout} style={styles.menuItem}><Text style={styles.menuIcon}>↪</Text><Text style={[styles.menuText, styles.logoutText]}>Đăng xuất</Text></Pressable>}
           </ScrollView>
           <Text style={styles.drawerFooter}>Một chỗ ngồi · Ngàn cảm xúc</Text>

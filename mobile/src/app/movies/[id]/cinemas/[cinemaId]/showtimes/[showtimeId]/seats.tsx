@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ApiError, getSeatMap, hasSession, holdSeats, releaseHold } from "@/services/api";
 import type { SeatHold, SeatMap, ShowtimeSeat } from "@/types/api";
+import { seatSelectionError } from "@/utils/seat-selection";
 
 function money(value: string) { return `${Number(value).toLocaleString("vi-VN")}đ`; }
 function showtime(value: string) { return new Date(value).toLocaleString("vi-VN", { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); }
@@ -36,6 +37,7 @@ export default function SeatMapScreen() {
   }, [data]);
   const selectedSeats = useMemo(() => data?.seats.filter(seat => selectedIds.has(seat.id)) ?? [], [data, selectedIds]);
   const total = selectedSeats.reduce((sum, seat) => sum + Number(seat.price), 0);
+  const selectionError = useMemo(() => seatSelectionError(data?.seats ?? [], selectedIds), [data, selectedIds]);
 
   useEffect(() => {
     if (!hold) return;
@@ -45,11 +47,13 @@ export default function SeatMapScreen() {
 
   const toggleSeat = (seat: ShowtimeSeat) => {
     if (seat.status !== "AVAILABLE") return;
+    setHoldError(null);
     setSelectedIds(current => { const next = new Set(current); if (next.has(seat.id)) next.delete(seat.id); else if (next.size < 8) next.add(seat.id); return next; });
   };
 
   const submitHold = async () => {
     if (selectedIds.size === 0 || holding) return;
+    if (selectionError) { setHoldError(selectionError); return; }
     if (!(await hasSession())) { router.push("/login" as never); return; }
     try { setHolding(true); setHoldError(null); const result = await holdSeats(numericId, [...selectedIds]); setHold(result); await load(); }
     catch (submitError) { if (submitError instanceof ApiError && submitError.status === 401) router.push("/login" as never); else { setHoldError(submitError instanceof Error ? submitError.message : "Không thể giữ ghế."); await load(); } }
@@ -79,8 +83,8 @@ export default function SeatMapScreen() {
       <View style={styles.legend}><Legend color="#252936" label="Trống" /><Legend color="#70402B" label="Đang giữ" /><Legend color="#454957" label="Đã đặt" /><Legend color="#FF526F" label="Đang chọn" /></View>
       <Text style={styles.vipNote}>Ghế viền vàng là VIP · Ghế đôi màu hồng là Sweetbox cho 2 người · Chọn tối đa 8 vị trí</Text>
 
-      {hold ? <View style={styles.holdResult}><Text style={styles.holdResultTitle}>Đang giữ ghế {hold.seats.map(seat => seat.label).join(", ")}</Text><Text style={styles.countdown}>Còn {String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:{String(remainingSeconds % 60).padStart(2, "0")}</Text><Text style={styles.holdResultMeta}>Mã: {hold.code} · {money(hold.totalAmount)}</Text><Pressable onPress={() => router.push(`/bookings/${hold.id}` as never)} style={styles.continueButton}><Text style={styles.holdText}>Tiếp tục đặt vé</Text></Pressable><Pressable disabled={holding} onPress={() => void cancelHold()}><Text style={styles.cancelHold}>Hủy giữ ghế</Text></Pressable></View> : selectedSeats.length > 0 ? <View style={styles.checkout}><View><Text style={styles.selectedLabel}>{selectedSeats.map(seat => `${seat.rowLabel}${seat.seatNumber}`).join(", ")}</Text><Text style={styles.total}>{total.toLocaleString("vi-VN")}đ</Text></View><Pressable disabled={holding} onPress={() => void submitHold()} style={styles.holdButton}>{holding ? <ActivityIndicator color="#FFFFFF" /> : <><Text style={styles.holdText}>Giữ {selectedSeats.length} vị trí</Text><Text style={styles.holdHint}>Trong 5 phút</Text></>}</Pressable></View> : <Text style={styles.guide}>Chạm vào ghế trống để chọn.</Text>}
-      {holdError && <Text style={styles.holdError}>{holdError}</Text>}
+      {hold ? <View style={styles.holdResult}><Text style={styles.holdResultTitle}>Đang giữ ghế {hold.seats.map(seat => seat.label).join(", ")}</Text><Text style={styles.countdown}>Còn {String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:{String(remainingSeconds % 60).padStart(2, "0")}</Text><Text style={styles.holdResultMeta}>Mã: {hold.code} · {money(hold.totalAmount)}</Text><Pressable onPress={() => router.push(`/bookings/${hold.id}` as never)} style={styles.continueButton}><Text style={styles.holdText}>Tiếp tục đặt vé</Text></Pressable><Pressable disabled={holding} onPress={() => void cancelHold()}><Text style={styles.cancelHold}>Hủy giữ ghế</Text></Pressable></View> : selectedSeats.length > 0 ? <View style={styles.checkout}><View><Text style={styles.selectedLabel}>{selectedSeats.map(seat => `${seat.rowLabel}${seat.seatNumber}`).join(", ")}</Text><Text style={styles.total}>{total.toLocaleString("vi-VN")}đ</Text></View><Pressable disabled={holding || !!selectionError} onPress={() => void submitHold()} style={[styles.holdButton, !!selectionError && styles.disabledButton]}>{holding ? <ActivityIndicator color="#FFFFFF" /> : <><Text style={styles.holdText}>Giữ {selectedSeats.length} vị trí</Text><Text style={styles.holdHint}>Trong 5 phút</Text></>}</Pressable></View> : <Text style={styles.guide}>Chạm vào ghế trống để chọn.</Text>}
+      {(selectionError || holdError) && <Text style={styles.holdError}>{selectionError || holdError}</Text>}
     </ScrollView>
   );
 }
@@ -97,7 +101,7 @@ const styles = StyleSheet.create({
   seatText: { color: "#BDC1CE", fontSize: 10, fontWeight: "800" }, selectedSeatText: { color: "#FFFFFF" }, legend: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 14, marginTop: 22 }, legendItem: { flexDirection: "row", alignItems: "center" }, legendBox: { width: 13, height: 13, marginRight: 5, borderRadius: 4 }, legendText: { color: "#9296A7", fontSize: 10 },
   vipNote: { marginTop: 13, color: "#B5A06C", textAlign: "center", fontSize: 10 }, checkout: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 25, padding: 16, borderRadius: 18, backgroundColor: "#191B27", borderWidth: 1, borderColor: "#2B2E3C" },
   selectedLabel: { maxWidth: 150, color: "#C7CAD5", fontSize: 11, fontWeight: "700" }, total: { marginTop: 5, color: "#FFFFFF", fontSize: 20, fontWeight: "900" }, holdButton: { alignItems: "center", paddingHorizontal: 18, paddingVertical: 11, borderRadius: 13, backgroundColor: "#FF526F" }, holdText: { color: "#FFFFFF", fontSize: 13, fontWeight: "900" }, holdHint: { marginTop: 2, color: "#FFD2DA", fontSize: 9 },
-  holdResult: { alignItems: "center", marginTop: 25, padding: 18, borderRadius: 18, backgroundColor: "#191B27", borderWidth: 1, borderColor: "#4D3040" }, holdResultTitle: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" }, countdown: { marginTop: 7, color: "#FF7089", fontSize: 28, fontWeight: "900" }, holdResultMeta: { marginTop: 5, color: "#9DA1B0", fontSize: 11 }, cancelHold: { marginTop: 14, color: "#FF9AAD", fontWeight: "800" }, holdError: { marginTop: 13, color: "#FF8599", textAlign: "center" },
+  holdResult: { alignItems: "center", marginTop: 25, padding: 18, borderRadius: 18, backgroundColor: "#191B27", borderWidth: 1, borderColor: "#4D3040" }, disabledButton: { opacity: 0.45 }, holdResultTitle: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" }, countdown: { marginTop: 7, color: "#FF7089", fontSize: 28, fontWeight: "900" }, holdResultMeta: { marginTop: 5, color: "#9DA1B0", fontSize: 11 }, cancelHold: { marginTop: 14, color: "#FF9AAD", fontWeight: "800" }, holdError: { marginTop: 13, color: "#FF8599", textAlign: "center" },
   continueButton: { marginTop: 16, paddingHorizontal: 28, paddingVertical: 13, borderRadius: 13, backgroundColor: "#FF526F" },
   guide: { marginTop: 22, color: "#8F93A4", textAlign: "center", fontSize: 12 }, muted: { marginTop: 9, color: "#979BAB", textAlign: "center" }, errorTitle: { color: "#FFFFFF", fontSize: 20, fontWeight: "800" }, retry: { marginTop: 16, color: "#FF7089", fontWeight: "800" },
 });

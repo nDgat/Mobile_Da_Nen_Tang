@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { auditQuerySchema } from "../modules/audit/audit.query.js";
 
 const positiveInteger = z.coerce.number().int("Phải là số nguyên.").positive("Phải lớn hơn 0.");
 const page = positiveInteger.optional();
@@ -32,5 +33,5 @@ export const adminSchemas = {
   reviewQuery: z.object({ page, limit: limit100, visible: z.enum(["true", "false"]).optional() }),
   statusBody: z.object({ isActive: z.boolean() }).strict(),
   visibilityBody: z.object({ isVisible: z.boolean() }).strict(),
-  auditQuery: z.object({ page, limit: limit100, actorId: positiveInteger.optional(), action: z.string().trim().max(100).optional(), entityType: z.string().trim().max(100).optional(), entityId: z.string().trim().max(100).optional() }),
+  auditQuery: auditQuerySchema,
 };

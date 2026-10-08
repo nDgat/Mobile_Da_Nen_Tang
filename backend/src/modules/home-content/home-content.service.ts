@@ -34,6 +34,7 @@ function url(value: unknown, field: string) {
   const parsed = text(value, field, 2048, true);
   if (!parsed) return null;
   if (parsed.startsWith("/uploads/") && /^\/uploads\/[a-f0-9-]{36}\.jpg$/.test(parsed)) return parsed;
+  if (/^\/assets\/home-content\/[a-z0-9-]+\.jpg$/.test(parsed)) return parsed;
   if (field === "linkUrl" && parsed.startsWith("/") && !parsed.startsWith("//")) return parsed;
   try { if (["http:", "https:"].includes(new URL(parsed).protocol)) return parsed; } catch {}
   throw new HomeContentValidationError(`${field} must be an internal path or an HTTP(S) URL.`);
